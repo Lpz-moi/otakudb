@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
-import { TrendingUp, Calendar, Play, ChevronRight } from 'lucide-react';
+import { TrendingUp, Play, ChevronRight } from 'lucide-react';
 import { getTopAnime, getSeasonalAnime, type Anime } from '@/services/jikanApi';
 import { AnimeGrid } from '@/components/anime/AnimeGrid';
+import { HeroCarousel } from '@/components/anime/HeroCarousel';
+import { ScheduleSection } from '@/components/anime/ScheduleSection';
 import { useAnimeListStore } from '@/stores/animeListStore';
 import { Link } from 'react-router-dom';
 
 const HomePage = () => {
+  const [heroAnime, setHeroAnime] = useState<Anime[]>([]);
   const [trendingAnime, setTrendingAnime] = useState<Anime[]>([]);
-  const [seasonalAnime, setSeasonalAnime] = useState<Anime[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,13 +22,14 @@ const HomePage = () => {
         setLoading(true);
         setError(null);
         
-        const [trendingRes, seasonalRes] = await Promise.all([
+        const [topRes, seasonalRes] = await Promise.all([
           getTopAnime(1, 'bypopularity'),
           getSeasonalAnime(),
         ]);
 
-        setTrendingAnime(trendingRes.data.slice(0, 12));
-        setSeasonalAnime(seasonalRes.data.slice(0, 12));
+        // Use top 5 for hero carousel
+        setHeroAnime(seasonalRes.data.slice(0, 5));
+        setTrendingAnime(topRes.data.slice(0, 12));
       } catch (err) {
         setError('Erreur lors du chargement des données');
         console.error(err);
@@ -39,28 +42,13 @@ const HomePage = () => {
   }, []);
 
   return (
-    <div className="page-container space-y-12">
-      {/* Hero Section - Clean and simple */}
-      <section className="relative -mx-4 sm:-mx-6 lg:-mx-8 -mt-8 px-6 sm:px-8 lg:px-12 py-12 md:py-16 border-b border-border/50">
-        <div className="max-w-xl">
-          <h1 className="text-3xl sm:text-4xl font-display font-bold text-foreground leading-tight">
-            Bienvenue sur{' '}
-            <span className="text-primary">OtakuDB</span>
-          </h1>
-          <p className="mt-3 text-base text-muted-foreground">
-            Gérez vos animes et suivez votre progression.
-          </p>
-          <div className="mt-6 flex gap-3">
-            <Link to="/search" className="btn-primary inline-flex items-center gap-2">
-              Explorer
-            </Link>
-            <Link to="/lists" className="btn-secondary inline-flex items-center gap-2">
-              Mes Listes
-            </Link>
-          </div>
-        </div>
+    <div className="page-container space-y-10">
+      {/* Hero Carousel */}
+      <section className="-mx-4 sm:-mx-6 lg:-mx-8 -mt-8 px-4 sm:px-6 lg:px-8 pt-4">
+        <HeroCarousel animes={heroAnime} loading={loading} />
       </section>
 
+      {/* Continue Watching */}
       {watchingList.length > 0 && (
         <section>
           <div className="flex items-center justify-between mb-4">
@@ -84,13 +72,12 @@ const HomePage = () => {
                   <img
                     src={item.anime.images.webp?.large_image_url || item.anime.images.jpg?.large_image_url}
                     alt={item.anime.title}
-                    className="anime-card-image transition-transform duration-500 group-hover:scale-110"
+                    className="anime-card-image transition-transform duration-300 group-hover:scale-105"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   
-                  {/* Progress overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 p-4 space-y-2">
+                  <div className="absolute bottom-0 left-0 right-0 p-3 space-y-2">
                     <div className="progress-bar bg-white/20">
                       <div 
                         className="progress-bar-fill" 
@@ -99,18 +86,13 @@ const HomePage = () => {
                         }} 
                       />
                     </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs text-white font-medium">
-                        Ép. {item.progress}/{item.anime.episodes || '?'}
-                      </p>
-                      <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Play className="w-4 h-4 text-primary-foreground fill-current" />
-                      </div>
-                    </div>
+                    <p className="text-xs text-white font-medium">
+                      Ép. {item.progress}/{item.anime.episodes || '?'}
+                    </p>
                   </div>
                 </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                <div className="p-3">
+                  <h3 className="font-medium text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors">
                     {item.anime.title_english || item.anime.title}
                   </h3>
                 </div>
@@ -122,34 +104,27 @@ const HomePage = () => {
 
       {/* Error State */}
       {error && (
-        <div className="glass-card p-8 text-center">
-          <p className="text-destructive mb-4">{error}</p>
+        <div className="glass-card p-6 text-center">
+          <p className="text-destructive mb-3">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="btn-secondary"
+            className="btn-secondary text-sm"
           >
             Réessayer
           </button>
         </div>
       )}
 
+      {/* Schedule */}
+      <ScheduleSection />
+
+      {/* Trending */}
       <section>
         <h2 className="section-title flex items-center gap-2">
           <TrendingUp className="w-5 h-5 text-primary" />
           Tendances
         </h2>
         <AnimeGrid animes={trendingAnime} loading={loading} />
-      </section>
-
-      {/* Seasonal */}
-      <section>
-        <h2 className="section-title flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center">
-            <Calendar className="w-4 h-4 text-primary" />
-          </div>
-          Cette saison
-        </h2>
-        <AnimeGrid animes={seasonalAnime} loading={loading} />
       </section>
     </div>
   );

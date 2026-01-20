@@ -169,3 +169,19 @@ export const getAnimeByGenre = async (genreId: number, page = 1): Promise<JikanR
 export const getGenres = async (): Promise<JikanResponse<{ mal_id: number; name: string; count: number }[]>> => {
   return fetchWithRetry(`${BASE_URL}/genres/anime`);
 };
+
+export interface ScheduleAnime extends Anime {
+  broadcast?: {
+    day: string | null;
+    time: string | null;
+    timezone: string | null;
+    string: string | null;
+  };
+}
+
+export const getSchedule = async (day?: string): Promise<JikanResponse<ScheduleAnime[]>> => {
+  const url = day 
+    ? `${BASE_URL}/schedules?filter=${day}&limit=24`
+    : `${BASE_URL}/schedules?limit=24`;
+  return fetchWithRetry(url);
+};
