@@ -26,25 +26,16 @@ export const AnimeGrid = ({ animes, loading, emptyMessage = 'Aucun anime trouvé
 
   if (animes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <div className="w-20 h-20 rounded-2xl bg-muted/50 flex items-center justify-center mb-6">
-          <span className="text-3xl">🎬</span>
-        </div>
-        <p className="text-muted-foreground text-lg">{emptyMessage}</p>
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <p className="text-muted-foreground">{emptyMessage}</p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
-      {animes.map((anime, i) => (
-        <div 
-          key={anime.mal_id} 
-          className="animate-fade-in" 
-          style={{ animationDelay: `${i * 30}ms` }}
-        >
-          <AnimeCard anime={anime} />
-        </div>
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+      {animes.map((anime) => (
+        <AnimeCard key={anime.mal_id} anime={anime} />
       ))}
     </div>
   );

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Star, Play, Plus, Check, Heart } from 'lucide-react';
+import { Play, Plus, Check, Heart } from 'lucide-react';
 import type { Anime } from '@/services/jikanApi';
 import { useAnimeListStore } from '@/stores/animeListStore';
 
@@ -55,32 +55,30 @@ export const AnimeCard = ({ anime, showQuickAdd = true, showProgress = false, cl
           loading="lazy"
         />
         
-        {/* Gradient Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30" />
         
         {/* Top Row: Score + Favorite */}
         <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
           {/* Score Badge */}
           {anime.score ? (
             <div className={`score-badge ${getScoreClass(anime.score)}`}>
-              <Star className="w-3.5 h-3.5 fill-current" />
               <span>{anime.score.toFixed(1)}</span>
             </div>
           ) : (
             <div />
           )}
           
-          {/* Favorite Button - Always visible */}
+          {/* Favorite Button */}
           <button
             onClick={handleToggleFavorite}
-            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 backdrop-blur-sm ${
+            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
               favorite
-                ? 'bg-primary text-primary-foreground shadow-lg'
-                : 'bg-black/50 text-white/80 hover:bg-primary hover:text-primary-foreground'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-black/40 text-white/70 hover:bg-black/60'
             }`}
           >
-            <Heart className={`w-4 h-4 ${favorite ? 'fill-current' : ''}`} />
+            <Heart className={`w-3.5 h-3.5 ${favorite ? 'fill-current' : ''}`} />
           </button>
         </div>
 
@@ -95,11 +93,10 @@ export const AnimeCard = ({ anime, showQuickAdd = true, showProgress = false, cl
             )}
           </div>
 
-          {/* Quick Add - Only on hover if not in list */}
           {showQuickAdd && !inList && (
             <button
               onClick={handleQuickAdd}
-              className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 shadow-lg"
+              className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <Plus className="w-4 h-4" />
             </button>

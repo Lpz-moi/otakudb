@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { TrendingUp, Calendar, Sparkles, Play, ChevronRight } from 'lucide-react';
+import { TrendingUp, Calendar, Play, ChevronRight } from 'lucide-react';
 import { getTopAnime, getSeasonalAnime, type Anime } from '@/services/jikanApi';
 import { AnimeGrid } from '@/components/anime/AnimeGrid';
 import { useAnimeListStore } from '@/stores/animeListStore';
@@ -40,55 +40,45 @@ const HomePage = () => {
 
   return (
     <div className="page-container space-y-12">
-      {/* Hero Section */}
-      <section className="relative -mx-4 sm:-mx-6 lg:-mx-8 -mt-8 px-6 sm:px-8 lg:px-12 py-14 md:py-20 bg-gradient-to-br from-primary/8 via-background to-background overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-        
-        <div className="relative max-w-2xl">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-display font-bold text-foreground leading-tight">
+      {/* Hero Section - Clean and simple */}
+      <section className="relative -mx-4 sm:-mx-6 lg:-mx-8 -mt-8 px-6 sm:px-8 lg:px-12 py-12 md:py-16 border-b border-border/50">
+        <div className="max-w-xl">
+          <h1 className="text-3xl sm:text-4xl font-display font-bold text-foreground leading-tight">
             Bienvenue sur{' '}
-            <span className="text-primary glow-text">OtakuDB</span>
+            <span className="text-primary">OtakuDB</span>
           </h1>
-          <p className="mt-5 text-lg text-muted-foreground leading-relaxed">
-            Gérez vos animes, suivez votre progression et découvrez de nouvelles pépites.
+          <p className="mt-3 text-base text-muted-foreground">
+            Gérez vos animes et suivez votre progression.
           </p>
-          <div className="mt-8 flex flex-wrap gap-4">
+          <div className="mt-6 flex gap-3">
             <Link to="/search" className="btn-primary inline-flex items-center gap-2">
-              <Sparkles className="w-4 h-4" />
               Explorer
             </Link>
             <Link to="/lists" className="btn-secondary inline-flex items-center gap-2">
-              <Play className="w-4 h-4" />
               Mes Listes
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Continue Watching - Enhanced cards */}
       {watchingList.length > 0 && (
         <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="section-title flex items-center gap-3 mb-0">
-              <div className="w-9 h-9 rounded-xl bg-status-watching/20 flex items-center justify-center">
-                <Play className="w-4 h-4 text-status-watching" />
-              </div>
-              Continuer à regarder
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="section-title flex items-center gap-2 mb-0">
+              <Play className="w-5 h-5 text-primary" />
+              Continuer
             </h2>
-            <Link to="/lists" className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1 transition-colors">
+            <Link to="/lists" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
               Voir tout
               <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
-            {watchingList.slice(0, 6).map((item, i) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {watchingList.slice(0, 6).map((item) => (
               <Link
                 key={item.anime.mal_id}
                 to={`/anime/${item.anime.mal_id}`}
-                className="anime-card group block animate-fade-in"
-                style={{ animationDelay: `${i * 50}ms` }}
+                className="anime-card group block"
               >
                 <div className="relative aspect-[3/4] overflow-hidden rounded-t-2xl">
                   <img
@@ -143,12 +133,9 @@ const HomePage = () => {
         </div>
       )}
 
-      {/* Trending */}
       <section>
-        <h2 className="section-title flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center">
-            <TrendingUp className="w-4 h-4 text-primary" />
-          </div>
+        <h2 className="section-title flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-primary" />
           Tendances
         </h2>
         <AnimeGrid animes={trendingAnime} loading={loading} />

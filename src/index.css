@@ -93,18 +93,16 @@
   }
 
   .anime-card:hover {
-    @apply border-primary/40;
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-glow), 0 12px 24px -8px hsla(0 0% 0% / 0.4);
+    @apply border-border;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px -6px hsla(0 0% 0% / 0.4);
   }
 
   .anime-card-image {
     @apply w-full aspect-[3/4] object-cover;
   }
 
-  .glow-text {
-    text-shadow: 0 0 30px hsla(24, 85%, 55%, 0.6);
-  }
+  /* Removed glow-text - too artificial */
 
   .nav-link {
     @apply flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground transition-all duration-200;
@@ -118,24 +116,21 @@
     @apply bg-primary/15 text-primary font-medium;
   }
 
-  /* Score badge - larger and more visible */
+  /* Score badge - clean and readable */
   .score-badge {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-bold backdrop-blur-sm;
+    @apply inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold;
   }
 
   .score-badge.high {
-    @apply bg-[hsl(var(--rating-green))]/25 text-[hsl(var(--rating-green))];
-    box-shadow: 0 0 12px -2px hsl(var(--rating-green) / 0.4);
+    @apply bg-[hsl(var(--rating-green))]/20 text-[hsl(var(--rating-green))];
   }
 
   .score-badge.medium {
-    @apply bg-[hsl(var(--rating-gold))]/25 text-[hsl(var(--rating-gold))];
-    box-shadow: 0 0 12px -2px hsl(var(--rating-gold) / 0.4);
+    @apply bg-[hsl(var(--rating-gold))]/20 text-[hsl(var(--rating-gold))];
   }
 
   .score-badge.low {
-    @apply bg-[hsl(var(--rating-red))]/25 text-[hsl(var(--rating-red))];
-    box-shadow: 0 0 12px -2px hsl(var(--rating-red) / 0.4);
+    @apply bg-[hsl(var(--rating-red))]/20 text-[hsl(var(--rating-red))];
   }
 
   /* Status badge - cleaner design */
@@ -161,20 +156,15 @@
 
   /* Buttons - refined */
   .btn-primary {
-    @apply bg-primary text-primary-foreground hover:bg-primary/90 px-5 py-2.5 rounded-xl font-semibold transition-all duration-200;
-  }
-
-  .btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-glow);
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg font-medium transition-colors;
   }
 
   .btn-secondary {
-    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 px-5 py-2.5 rounded-xl font-medium transition-all duration-200;
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 px-4 py-2 rounded-lg font-medium transition-colors;
   }
 
   .btn-ghost {
-    @apply text-muted-foreground hover:text-foreground hover:bg-accent px-5 py-2.5 rounded-xl font-medium transition-all duration-200;
+    @apply text-muted-foreground hover:text-foreground hover:bg-accent px-4 py-2 rounded-lg font-medium transition-colors;
   }
 
   .input-search {

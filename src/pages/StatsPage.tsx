@@ -35,17 +35,13 @@ const StatsPage = () => {
 
       {/* Overview Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-        {statCards.map(({ label, value, icon: Icon, color }, i) => (
-          <div 
-            key={label} 
-            className="glass-card p-4 animate-fade-in"
-            style={{ animationDelay: `${i * 50}ms` }}
-          >
-            <div className={`w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-3 ${color}`}>
-              <Icon className="w-5 h-5" />
+        {statCards.map(({ label, value, icon: Icon, color }) => (
+          <div key={label} className="glass-card p-4">
+            <div className={`w-9 h-9 rounded-lg bg-muted flex items-center justify-center mb-3 ${color}`}>
+              <Icon className="w-4 h-4" />
             </div>
-            <p className="text-2xl font-bold text-foreground">{value}</p>
-            <p className="text-sm text-muted-foreground">{label}</p>
+            <p className="text-xl font-bold text-foreground">{value}</p>
+            <p className="text-xs text-muted-foreground">{label}</p>
           </div>
         ))}
       </div>

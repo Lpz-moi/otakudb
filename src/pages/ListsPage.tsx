@@ -39,17 +39,13 @@ const ListsPage = () => {
   return (
     <div className="page-container space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
-            <List className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-display font-bold">Mes Listes</h1>
-            <p className="text-sm text-muted-foreground">
-              {stats.total} anime{stats.total > 1 ? 's' : ''} au total
-            </p>
-          </div>
+      <div className="flex items-center gap-3">
+        <List className="w-6 h-6 text-primary" />
+        <div>
+          <h1 className="text-2xl font-display font-bold">Mes Listes</h1>
+          <p className="text-sm text-muted-foreground">
+            {stats.total} anime{stats.total > 1 ? 's' : ''}
+          </p>
         </div>
       </div>
 
@@ -85,45 +81,29 @@ const ListsPage = () => {
 
       {/* List Content */}
       {items.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-20 h-20 rounded-2xl bg-muted/50 flex items-center justify-center mb-6">
-            {activeTab === 'watching' && <Play className="w-10 h-10 text-muted-foreground" />}
-            {activeTab === 'completed' && <Check className="w-10 h-10 text-muted-foreground" />}
-            {activeTab === 'planned' && <Clock className="w-10 h-10 text-muted-foreground" />}
-            {activeTab === 'favorites' && <Heart className="w-10 h-10 text-muted-foreground" />}
-          </div>
-          <h3 className="text-xl font-semibold text-foreground mb-2">Liste vide</h3>
-          <p className="text-muted-foreground max-w-xs mb-6">
-            {activeTab === 'watching' && "Vous ne regardez aucun anime actuellement."}
-            {activeTab === 'completed' && "Vous n'avez terminé aucun anime."}
-            {activeTab === 'planned' && "Votre liste à regarder est vide."}
-            {activeTab === 'favorites' && "Vous n'avez pas encore de favoris."}
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <p className="text-muted-foreground mb-4">
+            {activeTab === 'watching' && "Aucun anime en cours."}
+            {activeTab === 'completed' && "Aucun anime terminé."}
+            {activeTab === 'planned' && "Aucun anime à voir."}
+            {activeTab === 'favorites' && "Aucun favori."}
           </p>
-          <Link to="/search" className="btn-primary">
-            Explorer les animes
+          <Link to="/search" className="btn-primary text-sm">
+            Explorer
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
-          {items.map((item, i) => (
-            <div 
-              key={item.anime.mal_id} 
-              className="animate-fade-in"
-              style={{ animationDelay: `${i * 30}ms` }}
-            >
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          {items.map((item) => (
+            <div key={item.anime.mal_id}>
               <AnimeCard 
                 anime={item.anime} 
                 showQuickAdd={false} 
                 showProgress={activeTab === 'watching'}
               />
-              
-              {/* Rating stars for completed - Separate and clear */}
               {activeTab === 'completed' && item.rating && (
-                <div className="mt-3 px-2 flex items-center justify-center gap-2">
+                <div className="mt-2 flex items-center justify-center gap-1">
                   {renderRatingStars(item.rating)}
-                  <span className="text-xs text-muted-foreground">
-                    {item.rating}/5
-                  </span>
                 </div>
               )}
             </div>

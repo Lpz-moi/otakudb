@@ -324,18 +324,18 @@ const AnimeDetailPage = () => {
             {listItem && listItem.status === 'completed' && (
               <div className="glass-card p-4 space-y-3">
                 <span className="text-sm text-muted-foreground">Votre note</span>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
                       onClick={() => handleRatingChange(star)}
-                      className={`text-2xl transition-all hover:scale-110 ${
+                      className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
                         listItem.rating && star <= listItem.rating
-                          ? 'text-rating-gold'
-                          : 'text-muted-foreground/30 hover:text-rating-gold/50'
+                          ? 'bg-rating-gold/20 text-rating-gold'
+                          : 'bg-muted text-muted-foreground hover:bg-muted/80'
                       }`}
                     >
-                      ★
+                      <Star className={`w-4 h-4 ${listItem.rating && star <= listItem.rating ? 'fill-current' : ''}`} />
                     </button>
                   ))}
                 </div>
