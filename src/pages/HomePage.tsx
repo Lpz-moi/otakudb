@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { TrendingUp, Play, ChevronRight } from 'lucide-react';
+import { TrendingUp, Play, ChevronRight, Tv } from 'lucide-react';
 import { getTopAnime, getSeasonalAnime, type Anime } from '@/services/jikanApi';
 import { AnimeGrid } from '@/components/anime/AnimeGrid';
 import { HeroCarousel } from '@/components/anime/HeroCarousel';
-import { ScheduleSection } from '@/components/anime/ScheduleSection';
+import { CalendarSchedule } from '@/components/calendar/CalendarSchedule';
+import { RecommendationsSection } from '@/components/recommendations/RecommendationsSection';
 import { useAnimeListStore } from '@/stores/animeListStore';
 import { Link } from 'react-router-dom';
 
@@ -13,8 +14,9 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const { getItemsByStatus } = useAnimeListStore();
+  const { getItemsByStatus, getStats } = useAnimeListStore();
   const watchingList = getItemsByStatus('watching');
+  const stats = getStats();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -43,6 +45,28 @@ const HomePage = () => {
 
   return (
     <div className="page-container space-y-6 sm:space-y-8 lg:space-y-10">
+      {/* Welcome message for new users */}
+      {stats.total === 0 && (
+        <section className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-2xl p-4 sm:p-6 border border-primary/20">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+              <Tv className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="font-display font-bold text-foreground">Bienvenue sur OtakuDB</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Suivez vos animes préférés, recevez des rappels et ne manquez plus jamais un épisode.
+              </p>
+              <div className="flex flex-wrap gap-2 mt-3">
+                <span className="px-2 py-1 text-xs rounded-lg bg-primary/10 text-primary font-medium">📅 Calendrier intelligent</span>
+                <span className="px-2 py-1 text-xs rounded-lg bg-primary/10 text-primary font-medium">🔔 Rappels personnalisés</span>
+                <span className="px-2 py-1 text-xs rounded-lg bg-primary/10 text-primary font-medium">🇫🇷 Horaires français</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Hero Carousel */}
       <section className="-mx-4 sm:-mx-5 md:-mx-6 lg:-mx-8">
         <div className="px-4 sm:px-5 md:px-6 lg:px-8">
@@ -68,7 +92,7 @@ const HomePage = () => {
               <Link
                 key={item.anime.mal_id}
                 to={`/anime/${item.anime.mal_id}`}
-                className="anime-card group block"
+                className="anime-card group block active:scale-[0.98] transition-transform"
               >
                 <div className="relative aspect-[3/4] overflow-hidden rounded-t-xl sm:rounded-t-2xl">
                   <img
@@ -117,8 +141,11 @@ const HomePage = () => {
         </div>
       )}
 
-      {/* Schedule */}
-      <ScheduleSection />
+      {/* Premium Calendar Schedule */}
+      <CalendarSchedule />
+
+      {/* Personalized Recommendations */}
+      <RecommendationsSection />
 
       {/* Trending */}
       <section>
