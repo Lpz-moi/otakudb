@@ -42,33 +42,35 @@ const HomePage = () => {
   }, []);
 
   return (
-    <div className="page-container space-y-10">
+    <div className="page-container space-y-6 sm:space-y-8 lg:space-y-10">
       {/* Hero Carousel */}
-      <section className="-mx-4 sm:-mx-6 lg:-mx-8 -mt-8 px-4 sm:px-6 lg:px-8 pt-4">
-        <HeroCarousel animes={heroAnime} loading={loading} />
+      <section className="-mx-4 sm:-mx-5 md:-mx-6 lg:-mx-8">
+        <div className="px-4 sm:px-5 md:px-6 lg:px-8">
+          <HeroCarousel animes={heroAnime} loading={loading} />
+        </div>
       </section>
 
       {/* Continue Watching */}
       {watchingList.length > 0 && (
         <section>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
             <h2 className="section-title flex items-center gap-2 mb-0">
-              <Play className="w-5 h-5 text-primary" />
+              <Play className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               Continuer
             </h2>
-            <Link to="/lists" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+            <Link to="/lists" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 touch-target">
               Voir tout
               <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
             {watchingList.slice(0, 6).map((item) => (
               <Link
                 key={item.anime.mal_id}
                 to={`/anime/${item.anime.mal_id}`}
                 className="anime-card group block"
               >
-                <div className="relative aspect-[3/4] overflow-hidden rounded-t-2xl">
+                <div className="relative aspect-[3/4] overflow-hidden rounded-t-xl sm:rounded-t-2xl">
                   <img
                     src={item.anime.images.webp?.large_image_url || item.anime.images.jpg?.large_image_url}
                     alt={item.anime.title}
@@ -77,7 +79,7 @@ const HomePage = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   
-                  <div className="absolute bottom-0 left-0 right-0 p-3 space-y-2">
+                  <div className="absolute bottom-0 left-0 right-0 p-2.5 sm:p-3 space-y-1.5 sm:space-y-2">
                     <div className="progress-bar bg-white/20">
                       <div 
                         className="progress-bar-fill" 
@@ -86,13 +88,13 @@ const HomePage = () => {
                         }} 
                       />
                     </div>
-                    <p className="text-xs text-white font-medium">
+                    <p className="text-[10px] sm:text-xs text-white font-medium">
                       Ép. {item.progress}/{item.anime.episodes || '?'}
                     </p>
                   </div>
                 </div>
-                <div className="p-3">
-                  <h3 className="font-medium text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                <div className="p-2.5 sm:p-3">
+                  <h3 className="font-medium text-xs sm:text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors">
                     {item.anime.title_english || item.anime.title}
                   </h3>
                 </div>
@@ -121,7 +123,7 @@ const HomePage = () => {
       {/* Trending */}
       <section>
         <h2 className="section-title flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-primary" />
+          <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
           Tendances
         </h2>
         <AnimeGrid animes={trendingAnime} loading={loading} />

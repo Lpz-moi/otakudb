@@ -44,20 +44,20 @@ export const ScheduleSection = () => {
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
         <h2 className="section-title flex items-center gap-2 mb-0">
-          <Calendar className="w-5 h-5 text-primary" />
+          <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
           Calendrier
         </h2>
       </div>
 
-      {/* Day Tabs */}
-      <div className="flex gap-1 mb-4 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+      {/* Day Tabs - Scrollable on mobile */}
+      <div className="flex gap-1.5 sm:gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
         {DAYS.map(({ key, label }) => (
           <button
             key={key}
             onClick={() => setSelectedDay(key)}
-            className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+            className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors touch-target ${
               selectedDay === key
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
@@ -70,10 +70,10 @@ export const ScheduleSection = () => {
 
       {/* Schedule List */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="flex gap-3 p-3 rounded-xl bg-card">
-              <div className="w-16 h-20 skeleton rounded-lg flex-shrink-0" />
+            <div key={i} className="flex gap-3 p-2.5 sm:p-3 rounded-xl bg-card">
+              <div className="w-14 sm:w-16 h-18 sm:h-20 skeleton rounded-lg flex-shrink-0" />
               <div className="flex-1 space-y-2">
                 <div className="h-4 skeleton w-3/4 rounded" />
                 <div className="h-3 skeleton w-1/2 rounded" />
@@ -82,36 +82,36 @@ export const ScheduleSection = () => {
           ))}
         </div>
       ) : schedule.length === 0 ? (
-        <p className="text-muted-foreground text-center py-8">
+        <p className="text-muted-foreground text-center py-6 sm:py-8 text-sm">
           Aucun anime prévu ce jour.
         </p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
           {schedule.map((anime) => (
             <Link
               key={anime.mal_id}
               to={`/anime/${anime.mal_id}`}
-              className="flex gap-3 p-3 rounded-xl bg-card border border-border/50 hover:border-border transition-colors group"
+              className="flex gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-card border border-border/50 hover:border-border transition-colors group active:scale-[0.98]"
             >
               <img
                 src={anime.images.webp?.image_url || anime.images.jpg?.image_url}
                 alt={anime.title}
-                className="w-16 h-20 object-cover rounded-lg flex-shrink-0"
+                className="w-14 sm:w-16 h-18 sm:h-20 object-cover rounded-lg flex-shrink-0"
                 loading="lazy"
               />
-              <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+              <div className="flex-1 min-w-0 py-0.5">
+                <h3 className="font-medium text-xs sm:text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors">
                   {anime.title_english || anime.title}
                 </h3>
                 {anime.broadcast?.time && (
-                  <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1 mt-1 text-[10px] sm:text-xs text-muted-foreground">
                     <Clock className="w-3 h-3" />
                     <span>{anime.broadcast.time} (JST)</span>
                   </div>
                 )}
                 {anime.episodes && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {anime.episodes} épisodes
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">
+                    {anime.episodes} éps
                   </p>
                 )}
               </div>
