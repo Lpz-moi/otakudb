@@ -87,6 +87,10 @@ export const HeroCarousel = ({ animes, loading }: HeroCarouselProps) => {
                 {currentAnime.score.toFixed(1)}
               </span>
             )}
+            {/* VF/VOSTFR Badge */}
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 sm:py-1 rounded bg-primary/20 text-primary text-xs sm:text-sm font-medium">
+              VOSTFR
+            </span>
             {currentAnime.episodes && (
               <span className="text-xs sm:text-sm text-muted-foreground">
                 {currentAnime.episodes} éps
@@ -154,16 +158,16 @@ export const HeroCarousel = ({ animes, loading }: HeroCarouselProps) => {
         <ChevronRight className="w-5 h-5" />
       </button>
 
-      {/* Dots - Touch friendly */}
-      <div className="absolute bottom-3 sm:bottom-4 right-4 sm:right-6 md:right-8 flex items-center gap-1.5">
+      {/* Dots - Compact */}
+      <div className="absolute bottom-3 sm:bottom-4 right-4 sm:right-6 md:right-8 flex items-center gap-1">
         {animes.slice(0, 5).map((_, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            className={`h-2 rounded-full transition-all touch-target flex items-center justify-center ${
+            className={`h-1.5 rounded-full transition-all ${
               index === currentIndex
-                ? 'bg-primary w-5 sm:w-6'
-                : 'bg-foreground/30 hover:bg-foreground/50 w-2'
+                ? 'bg-primary w-4'
+                : 'bg-foreground/30 hover:bg-foreground/50 w-1.5'
             }`}
             aria-label={`Slide ${index + 1}`}
           />
