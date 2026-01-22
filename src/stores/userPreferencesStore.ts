@@ -185,12 +185,27 @@ export const useUserPreferencesStore = create<UserPreferencesState>()(
 
       exportData: () => {
         const state = get();
+        // Get anime list from localStorage
+        let animeList = {};
+        try {
+          const animeListData = localStorage.getItem('otakudb-anime-list');
+          if (animeListData) {
+            const parsed = JSON.parse(animeListData);
+            animeList = parsed.state?.items || {};
+          }
+        } catch (e) {
+          console.error('Error reading anime list:', e);
+        }
+        
         return JSON.stringify({
           profile: state.profile,
           versionPreference: state.versionPreference,
           timezone: state.timezone,
+          language: state.language,
           reminders: state.reminders,
           watchedEpisodes: state.watchedEpisodes,
+          // Include anime lists
+          animeList: animeList,
         });
       },
 
@@ -201,9 +216,25 @@ export const useUserPreferencesStore = create<UserPreferencesState>()(
             profile: parsed.profile || null,
             versionPreference: parsed.versionPreference || 'all',
             timezone: parsed.timezone || 'Europe/Paris',
+            language: parsed.language || 'fr',
             reminders: parsed.reminders || [],
             watchedEpisodes: parsed.watchedEpisodes || [],
           });
+          
+          // Import anime list if present
+          if (parsed.animeList && Object.keys(parsed.animeList).length > 0) {
+            try {
+              const existingData = localStorage.getItem('otakudb-anime-list');
+              const existing = existingData ? JSON.parse(existingData) : { state: { items: {} }, version: 0 };
+              localStorage.setItem('otakudb-anime-list', JSON.stringify({
+                ...existing,
+                state: { items: parsed.animeList },
+              }));
+            } catch (e) {
+              console.error('Error importing anime list:', e);
+            }
+          }
+          
           return true;
         } catch {
           return false;
