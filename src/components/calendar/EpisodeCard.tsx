@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, Bell, BellOff, Check, Play, Star } from 'lucide-react';
+import { Clock, Bell, Check, Play, Star } from 'lucide-react';
 import { type ScheduleAnime } from '@/services/jikanApi';
 import { useUserPreferencesStore } from '@/stores/userPreferencesStore';
 import { useAnimeListStore } from '@/stores/animeListStore';
@@ -8,7 +8,7 @@ import { convertJSTToFrance, getCountdown, getNextBroadcastDate } from '@/lib/ti
 import { toast } from 'sonner';
 
 interface EpisodeCardProps {
-  anime: ScheduleAnime;
+  anime: ScheduleAnime & { hasVF?: boolean };
   isVF: boolean;
   selectedDay: string;
 }
@@ -17,7 +17,7 @@ export const EpisodeCard = ({ anime, isVF, selectedDay }: EpisodeCardProps) => {
   const [countdown, setCountdown] = useState({ label: '', isNear: false, isPast: false });
   
   const { hasReminder, addReminder, removeReminder, isEpisodeWatched, markEpisodeWatched, unmarkEpisodeWatched } = useUserPreferencesStore();
-  const { isInList, addToList, getItemById } = useAnimeListStore();
+  const { isInList, addToList, getItemById, updateProgress } = useAnimeListStore();
 
   const listItem = getItemById(anime.mal_id);
   const currentEpisode = listItem ? listItem.progress + 1 : 1;
@@ -31,7 +31,10 @@ export const EpisodeCard = ({ anime, isVF, selectedDay }: EpisodeCardProps) => {
   // Calculate countdown
   useEffect(() => {
     const updateCountdown = () => {
-      if (!anime.broadcast?.day || !anime.broadcast?.time) return;
+      if (!anime.broadcast?.day || !anime.broadcast?.time) {
+        setCountdown({ label: '', isNear: false, isPast: true });
+        return;
+      }
       
       const { time: frTime } = convertJSTToFrance(anime.broadcast.time);
       const broadcastDate = getNextBroadcastDate(anime.broadcast.day, frTime);
@@ -40,7 +43,7 @@ export const EpisodeCard = ({ anime, isVF, selectedDay }: EpisodeCardProps) => {
     };
 
     updateCountdown();
-    const interval = setInterval(updateCountdown, 60000); // Update every minute
+    const interval = setInterval(updateCountdown, 60000);
     return () => clearInterval(interval);
   }, [anime.broadcast?.day, anime.broadcast?.time]);
 
@@ -52,14 +55,54 @@ export const EpisodeCard = ({ anime, isVF, selectedDay }: EpisodeCardProps) => {
       removeReminder(anime.mal_id, currentEpisode);
       toast.success('Rappel désactivé');
     } else {
-      addReminder({
-        animeId: anime.mal_id,
-        animeTitle: anime.title,
-        episodeNumber: currentEpisode,
-        reminderTiming: '30min',
-        isVF,
-      });
-      toast.success('Rappel activé pour 30min avant');
+      // Request notification permission
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().then(permission => {
+          if (permission === 'granted') {
+            scheduleReminder();
+          } else {
+            toast.error('Autorisez les notifications pour les rappels');
+          }
+        });
+      } else if ('Notification' in window && Notification.permission === 'granted') {
+        scheduleReminder();
+      } else {
+        // Fallback: just save the reminder locally
+        scheduleReminder();
+      }
+    }
+  };
+
+  const scheduleReminder = () => {
+    addReminder({
+      animeId: anime.mal_id,
+      animeTitle: anime.title_english || anime.title,
+      episodeNumber: currentEpisode,
+      reminderTiming: '30min',
+      isVF,
+    });
+    toast.success('Rappel activé (30 min avant)');
+    
+    // Try to schedule actual notification
+    if ('Notification' in window && Notification.permission === 'granted') {
+      // Calculate time until 30 min before broadcast
+      if (anime.broadcast?.day && anime.broadcast?.time) {
+        const { time: frTime } = convertJSTToFrance(anime.broadcast.time);
+        const broadcastDate = getNextBroadcastDate(anime.broadcast.day, frTime);
+        const reminderTime = broadcastDate.getTime() - 30 * 60 * 1000; // 30 min before
+        const now = Date.now();
+        
+        if (reminderTime > now) {
+          const delay = reminderTime - now;
+          setTimeout(() => {
+            new Notification(`📺 ${anime.title_english || anime.title}`, {
+              body: `Épisode ${currentEpisode} dans 30 minutes !`,
+              icon: anime.images.webp?.image_url || anime.images.jpg?.image_url,
+              tag: `anime-${anime.mal_id}-${currentEpisode}`,
+            });
+          }, delay);
+        }
+      }
     }
   };
 
@@ -72,9 +115,8 @@ export const EpisodeCard = ({ anime, isVF, selectedDay }: EpisodeCardProps) => {
       toast.success('Épisode non marqué');
     } else {
       markEpisodeWatched(anime.mal_id, currentEpisode);
-      // Also update progress in anime list if in list
       if (listItem) {
-        useAnimeListStore.getState().updateProgress(anime.mal_id, currentEpisode);
+        updateProgress(anime.mal_id, currentEpisode);
       }
       toast.success('Épisode marqué comme vu');
     }
@@ -93,14 +135,14 @@ export const EpisodeCard = ({ anime, isVF, selectedDay }: EpisodeCardProps) => {
   return (
     <Link
       to={`/anime/${anime.mal_id}`}
-      className={`flex gap-3 p-3 rounded-xl bg-card border transition-all active:scale-[0.99] ${
+      className={`flex gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-card border transition-all active:scale-[0.99] ${
         countdown.isNear 
           ? 'border-primary/50 bg-primary/5' 
-          : 'border-border/50 hover:border-border'
+          : 'border-border/30 hover:border-border'
       }`}
     >
       {/* Poster */}
-      <div className="relative w-16 h-22 flex-shrink-0">
+      <div className="relative w-14 sm:w-16 h-[72px] sm:h-20 flex-shrink-0">
         <img
           src={anime.images.webp?.image_url || anime.images.jpg?.image_url}
           alt={anime.title}
@@ -110,10 +152,10 @@ export const EpisodeCard = ({ anime, isVF, selectedDay }: EpisodeCardProps) => {
         
         {/* VF/VOSTFR Badge */}
         <div 
-          className={`absolute -top-1 -left-1 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded ${
+          className={`absolute -top-1 -left-1 px-1 sm:px-1.5 py-0.5 text-[8px] sm:text-[9px] font-bold uppercase rounded ${
             isVF 
               ? 'bg-primary text-primary-foreground' 
-              : 'bg-muted text-muted-foreground'
+              : 'bg-muted-foreground/80 text-white'
           }`}
         >
           {isVF ? 'VF' : 'VOSTFR'}
@@ -121,8 +163,8 @@ export const EpisodeCard = ({ anime, isVF, selectedDay }: EpisodeCardProps) => {
         
         {/* Score badge */}
         {anime.score && (
-          <div className="absolute -bottom-1 -right-1 flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-black/80 text-rating-gold text-[10px] font-medium">
-            <Star className="w-2.5 h-2.5 fill-current" />
+          <div className="absolute -bottom-1 -right-1 flex items-center gap-0.5 px-1 py-0.5 rounded bg-black/80 text-rating-gold text-[9px] font-medium">
+            <Star className="w-2 h-2 fill-current" />
             {anime.score.toFixed(1)}
           </div>
         )}
@@ -132,28 +174,29 @@ export const EpisodeCard = ({ anime, isVF, selectedDay }: EpisodeCardProps) => {
       <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
         {/* Title & Episode */}
         <div>
-          <h3 className="font-semibold text-sm text-foreground line-clamp-2 leading-tight">
+          <h3 className="font-semibold text-xs sm:text-sm text-foreground line-clamp-2 leading-tight">
             {anime.title_english || anime.title}
           </h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
             Épisode {currentEpisode}
             {anime.episodes && ` / ${anime.episodes}`}
           </p>
         </div>
 
         {/* Time & Countdown */}
-        <div className="flex items-center justify-between mt-2">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between mt-1.5 sm:mt-2 gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             {/* French Time */}
-            <div className="flex items-center gap-1 text-sm font-medium text-foreground">
-              <Clock className="w-3.5 h-3.5 text-primary" />
+            <div className="flex items-center gap-1 text-xs sm:text-sm font-medium text-foreground">
+              <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary" />
               <span>{frenchTime}</span>
+              <span className="text-[9px] text-muted-foreground hidden sm:inline">({offset})</span>
             </div>
             
             {/* Countdown badge */}
-            {!countdown.isPast && (
+            {countdown.label && !countdown.isPast && (
               <span 
-                className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${
+                className={`px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold rounded-full ${
                   countdown.isNear
                     ? 'bg-primary text-primary-foreground animate-pulse'
                     : 'bg-secondary text-secondary-foreground'
@@ -164,52 +207,51 @@ export const EpisodeCard = ({ anime, isVF, selectedDay }: EpisodeCardProps) => {
             )}
             
             {countdown.isPast && (
-              <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-rating-green/20 text-rating-green">
-                Disponible
+              <span className="px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold rounded-full bg-rating-green/20 text-rating-green">
+                Dispo
               </span>
             )}
           </div>
 
-          {/* Quick Actions */}
+          {/* Quick Actions - Touch optimized */}
           <div className="flex items-center gap-1">
             {/* Reminder button */}
             <button
               onClick={handleToggleReminder}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors touch-target ${
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-colors ${
                 reminderActive
                   ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-muted-foreground hover:text-foreground'
+                  : 'bg-secondary text-muted-foreground active:bg-secondary/80'
               }`}
               title={reminderActive ? 'Désactiver le rappel' : 'Activer un rappel'}
+              aria-label={reminderActive ? 'Désactiver le rappel' : 'Activer un rappel'}
             >
-              {reminderActive ? (
-                <Bell className="w-4 h-4 fill-current" />
-              ) : (
-                <Bell className="w-4 h-4" />
-              )}
+              <Bell className={`w-3.5 h-3.5 ${reminderActive ? 'fill-current' : ''}`} />
             </button>
 
             {/* Mark as watched button */}
             <button
               onClick={handleToggleWatched}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors touch-target ${
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-colors ${
                 episodeWatched
                   ? 'bg-rating-green text-white'
-                  : 'bg-secondary text-muted-foreground hover:text-foreground'
+                  : 'bg-secondary text-muted-foreground active:bg-secondary/80'
               }`}
               title={episodeWatched ? 'Marquer non vu' : 'Marquer comme vu'}
+              aria-label={episodeWatched ? 'Marquer non vu' : 'Marquer comme vu'}
             >
-              <Check className={`w-4 h-4 ${episodeWatched ? 'stroke-[3]' : ''}`} />
+              <Check className={`w-3.5 h-3.5 ${episodeWatched ? 'stroke-[3]' : ''}`} />
             </button>
 
             {/* Add to list (if not in list) */}
             {!isInList(anime.mal_id) && (
               <button
                 onClick={handleQuickAdd}
-                className="w-8 h-8 rounded-lg bg-primary/20 text-primary flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors touch-target"
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary/20 text-primary flex items-center justify-center active:bg-primary active:text-primary-foreground transition-colors"
                 title="Ajouter à ma liste"
+                aria-label="Ajouter à ma liste"
               >
-                <Play className="w-4 h-4" />
+                <Play className="w-3.5 h-3.5" />
               </button>
             )}
           </div>

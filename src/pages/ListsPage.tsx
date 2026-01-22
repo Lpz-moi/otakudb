@@ -12,6 +12,7 @@ const tabs: { status: ListStatus; label: string; icon: React.ElementType }[] = [
   { status: 'favorites', label: 'Favoris', icon: Heart },
 ];
 
+// Using forwardRef for proper React component ref handling
 const ListsPage = () => {
   const [activeTab, setActiveTab] = useState<ListStatus>('watching');
   const { getItemsByStatus, getStats } = useAnimeListStore();
