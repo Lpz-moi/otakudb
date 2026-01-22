@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getSchedule, type ScheduleAnime } from '@/services/jikanApi';
 import { useUserPreferencesStore } from '@/stores/userPreferencesStore';
+import { checkVFAvailability } from '@/services/vfDatabase';
 import { EpisodeCard } from './EpisodeCard';
 
 const DAYS = [
@@ -14,37 +15,9 @@ const DAYS = [
   { key: 'sunday', label: 'Dim', fullLabel: 'Dimanche' },
 ];
 
-// VF detection based on title patterns (French dub indicators)
-const detectVF = (anime: ScheduleAnime): boolean => {
-  const title = (anime.title || '').toLowerCase();
-  const titleEnglish = (anime.title_english || '').toLowerCase();
-  
-  // Common patterns for French dubs
-  const vfPatterns = [
-    /\(vf\)/i,
-    /\[vf\]/i,
-    /version française/i,
-    /doublage français/i,
-    /french dub/i,
-  ];
-  
-  return vfPatterns.some(pattern => 
-    pattern.test(title) || pattern.test(titleEnglish)
-  );
-};
-
-// Simulate VF availability based on popularity (popular anime more likely to have VF)
-const hasVFAvailable = (anime: ScheduleAnime): boolean => {
-  // First check explicit VF markers
-  if (detectVF(anime)) return true;
-  
-  // Popular anime (high member count or high score) more likely to have VF
-  const isPopular = (anime.members && anime.members > 100000) || (anime.score && anime.score >= 7.5);
-  
-  // Use a deterministic check based on mal_id for consistency
-  const probabilisticCheck = anime.mal_id % 5 === 0; // ~20% of anime
-  
-  return isPopular && probabilisticCheck;
+// Use improved VF detection from vfDatabase
+const getVFStatus = (anime: ScheduleAnime) => {
+  return checkVFAvailability(anime);
 };
 
 export const CalendarSchedule = () => {
@@ -85,12 +58,16 @@ export const CalendarSchedule = () => {
     fetchSchedule();
   }, [selectedDay.key]);
 
-  // Enrich schedule with VF info and filter
+  // Enrich schedule with VF info
   const enrichedSchedule = useMemo(() => {
-    return schedule.map(anime => ({
-      ...anime,
-      hasVF: hasVFAvailable(anime),
-    }));
+    return schedule.map(anime => {
+      const vfStatus = getVFStatus(anime);
+      return {
+        ...anime,
+        hasVF: vfStatus.hasVF,
+        vfConfidence: vfStatus.confidence,
+      };
+    });
   }, [schedule]);
 
   // Filter schedule based on version preference
@@ -132,7 +109,7 @@ export const CalendarSchedule = () => {
           <h2 className="text-base sm:text-lg font-display font-bold">Calendrier</h2>
         </div>
         
-        {/* Version Filter - More compact on mobile */}
+        {/* Version Filter */}
         <div className="flex items-center gap-0.5 bg-secondary/50 rounded-lg p-0.5">
           {(['all', 'vf', 'vostfr'] as const).map((v) => (
             <button
@@ -150,7 +127,7 @@ export const CalendarSchedule = () => {
         </div>
       </div>
 
-      {/* Day Selector - Mobile optimized swipeable */}
+      {/* Day Selector */}
       <div className="relative">
         {/* Navigation arrows - Desktop only */}
         <button
@@ -232,7 +209,7 @@ export const CalendarSchedule = () => {
         </div>
       </div>
 
-      {/* Schedule List - Optimized for mobile scroll */}
+      {/* Schedule List */}
       {loading ? (
         <div className="space-y-2">
           {Array.from({ length: 4 }).map((_, i) => (
