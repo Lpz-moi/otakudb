@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, Star, RefreshCw } from 'lucide-react';
+import { Star, RefreshCw, Heart } from 'lucide-react';
 import { useAnimeListStore } from '@/stores/animeListStore';
 import { getAnimeByGenre, type Anime } from '@/services/jikanApi';
 import { AnimeCard } from '@/components/anime/AnimeCard';
@@ -46,7 +46,6 @@ export const RecommendationsSection = () => {
 
       setLoading(true);
       try {
-        // Fetch anime from top genre
         const topGenreId = topGenres[0]?.id;
         if (!topGenreId) {
           setRecommendations([]);
@@ -55,7 +54,6 @@ export const RecommendationsSection = () => {
 
         const response = await getAnimeByGenre(topGenreId);
         
-        // Filter out anime already in user's list
         const filtered = (response.data || [])
           .filter((anime) => !userAnimeIds.has(anime.mal_id))
           .slice(0, 6);
@@ -86,13 +84,13 @@ export const RecommendationsSection = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" />
-          <h2 className="text-lg sm:text-xl font-display font-bold">Pour toi</h2>
+          <Heart className="w-4 h-4 text-primary" />
+          <h2 className="text-base sm:text-lg font-display font-bold">Pour toi</h2>
         </div>
         
         <button
           onClick={handleRefresh}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary text-muted-foreground hover:text-foreground text-xs font-medium transition-colors touch-target"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary/80 text-muted-foreground hover:text-foreground text-xs font-medium transition-colors touch-target"
           disabled={loading}
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
@@ -102,12 +100,12 @@ export const RecommendationsSection = () => {
 
       {/* Genre tags */}
       {topGenres.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-muted-foreground">Basé sur :</span>
           {topGenres.map((genre) => (
             <span
               key={genre.id}
-              className="px-2 py-0.5 text-xs font-medium rounded-full bg-primary/10 text-primary"
+              className="px-2 py-0.5 text-xs font-medium rounded-full bg-secondary text-foreground/80"
             >
               {genre.name}
             </span>
@@ -130,7 +128,7 @@ export const RecommendationsSection = () => {
         </div>
       ) : recommendations.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8 text-center">
-          <Sparkles className="w-10 h-10 text-muted-foreground/30 mb-2" />
+          <Star className="w-8 h-8 text-muted-foreground/30 mb-2" />
           <p className="text-sm text-muted-foreground">
             Ajoute plus d'animes pour des recommandations personnalisées.
           </p>

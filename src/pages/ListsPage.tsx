@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { List, Play, Check, Clock, Heart } from 'lucide-react';
+import { List, Play, Check, Clock, Heart, Star } from 'lucide-react';
 import { useAnimeListStore, type ListStatus } from '@/stores/animeListStore';
 import { AnimeCard } from '@/components/anime/AnimeCard';
-import { Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const tabs: { status: ListStatus; label: string; icon: React.ElementType }[] = [
@@ -12,7 +11,6 @@ const tabs: { status: ListStatus; label: string; icon: React.ElementType }[] = [
   { status: 'favorites', label: 'Favoris', icon: Heart },
 ];
 
-// Using forwardRef for proper React component ref handling
 const ListsPage = () => {
   const [activeTab, setActiveTab] = useState<ListStatus>('watching');
   const { getItemsByStatus, getStats } = useAnimeListStore();
@@ -22,11 +20,11 @@ const ListsPage = () => {
   const renderRatingStars = (rating: number | null) => {
     if (!rating) return null;
     return (
-      <div className="flex items-center gap-0.5">
+      <div className="flex items-center gap-0.5 justify-center">
         {[1, 2, 3, 4, 5].map((star) => (
           <Star
             key={star}
-            className={`w-4 h-4 ${
+            className={`w-3 h-3 ${
               star <= rating
                 ? 'text-rating-gold fill-rating-gold'
                 : 'text-muted-foreground/20'
@@ -38,20 +36,20 @@ const ListsPage = () => {
   };
 
   return (
-    <div className="page-container space-y-8">
+    <div className="page-container space-y-5">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <List className="w-6 h-6 text-primary" />
+        <List className="w-5 h-5 text-primary" />
         <div>
-          <h1 className="text-2xl font-display font-bold">Mes Listes</h1>
-          <p className="text-sm text-muted-foreground">
-            {stats.total} anime{stats.total > 1 ? 's' : ''}
+          <h1 className="text-xl font-display font-bold">Mes Listes</h1>
+          <p className="text-xs text-muted-foreground">
+            {stats.total} anime{stats.total > 1 ? 's' : ''} au total
           </p>
         </div>
       </div>
 
-      {/* Tabs - Better spacing */}
-      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+      {/* Tabs - Mobile optimized */}
+      <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4 snap-x">
         {tabs.map(({ status, label, icon: Icon }) => {
           const count = status === 'watching' ? stats.watching
             : status === 'completed' ? stats.completed
@@ -62,16 +60,18 @@ const ListsPage = () => {
             <button
               key={status}
               onClick={() => setActiveTab(status)}
-              className={`tab-item flex items-center gap-2.5 whitespace-nowrap ${
-                activeTab === status ? 'active' : ''
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors snap-start ${
+                activeTab === status 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'bg-card text-muted-foreground active:bg-card-hover'
               }`}
             >
               <Icon className="w-4 h-4" />
               <span>{label}</span>
-              <span className={`text-xs px-2 py-0.5 rounded-full ${
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ml-0.5 ${
                 activeTab === status 
-                  ? 'bg-primary/20 text-primary' 
-                  : 'bg-muted text-muted-foreground'
+                  ? 'bg-primary-foreground/20 text-primary-foreground' 
+                  : 'bg-secondary text-muted-foreground'
               }`}>
                 {count}
               </span>
@@ -82,19 +82,25 @@ const ListsPage = () => {
 
       {/* List Content */}
       {items.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-muted-foreground mb-4">
-            {activeTab === 'watching' && "Aucun anime en cours."}
-            {activeTab === 'completed' && "Aucun anime terminé."}
-            {activeTab === 'planned' && "Aucun anime à voir."}
-            {activeTab === 'favorites' && "Aucun favori."}
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center mb-3">
+            {activeTab === 'watching' && <Play className="w-6 h-6 text-muted-foreground" />}
+            {activeTab === 'completed' && <Check className="w-6 h-6 text-muted-foreground" />}
+            {activeTab === 'planned' && <Clock className="w-6 h-6 text-muted-foreground" />}
+            {activeTab === 'favorites' && <Heart className="w-6 h-6 text-muted-foreground" />}
+          </div>
+          <p className="text-muted-foreground text-sm mb-4">
+            {activeTab === 'watching' && "Aucun anime en cours"}
+            {activeTab === 'completed' && "Aucun anime terminé"}
+            {activeTab === 'planned' && "Aucun anime prévu"}
+            {activeTab === 'favorites' && "Aucun favori"}
           </p>
           <Link to="/search" className="btn-primary text-sm">
-            Explorer
+            Découvrir des animes
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
           {items.map((item) => (
             <div key={item.anime.mal_id}>
               <AnimeCard 
@@ -103,7 +109,7 @@ const ListsPage = () => {
                 showProgress={activeTab === 'watching'}
               />
               {activeTab === 'completed' && item.rating && (
-                <div className="mt-2 flex items-center justify-center gap-1">
+                <div className="mt-1.5">
                   {renderRatingStars(item.rating)}
                 </div>
               )}

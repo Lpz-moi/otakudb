@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Settings, Info, Download, Upload, Trash2, Edit2, Check, X } from 'lucide-react';
+import { User, Info, Download, Upload, Trash2, Edit2, Check, X, Shield } from 'lucide-react';
 import { useAnimeListStore } from '@/stores/animeListStore';
 import { useUserPreferencesStore } from '@/stores/userPreferencesStore';
 import { toast } from 'sonner';
@@ -18,7 +18,6 @@ const ProfilePage = () => {
     exportData,
     importData,
     reminders,
-    watchedEpisodes
   } = useUserPreferencesStore();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -34,7 +33,7 @@ const ProfilePage = () => {
     createProfile(newUsername.trim());
     setNewUsername('');
     setShowCreateForm(false);
-    toast.success('Compte créé avec succès !');
+    toast.success('Profil créé');
   };
 
   const handleUpdateName = () => {
@@ -71,7 +70,7 @@ const ProfilePage = () => {
       reader.onload = (event) => {
         const content = event.target?.result as string;
         if (importData(content)) {
-          toast.success('Données importées avec succès');
+          toast.success('Données importées');
         } else {
           toast.error('Erreur lors de l\'import');
         }
@@ -82,44 +81,43 @@ const ProfilePage = () => {
   };
 
   const handleDeleteProfile = () => {
-    if (confirm('Êtes-vous sûr ? Toutes vos préférences et rappels seront supprimés.')) {
+    if (confirm('Supprimer votre profil ? Vos préférences et rappels seront effacés.')) {
       deleteProfile();
-      toast.success('Compte supprimé');
+      toast.success('Profil supprimé');
     }
   };
 
   return (
-    <div className="page-container space-y-6">
+    <div className="page-container space-y-5">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <User className="w-6 h-6 text-primary" />
-        <h1 className="text-xl sm:text-2xl font-display font-bold">Mon Profil</h1>
+        <User className="w-5 h-5 text-primary" />
+        <h1 className="text-xl font-display font-bold">Mon Profil</h1>
       </div>
 
       {/* Profile Card */}
       {!profile && !showCreateForm ? (
-        <div className="glass-card p-6 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-            <User className="w-8 h-8 text-primary" />
+        <div className="glass-card p-5 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <User className="w-7 h-7 text-primary" />
           </div>
-          <h2 className="text-lg font-bold text-foreground mb-2">Créer un compte local</h2>
-          <p className="text-sm text-muted-foreground mb-4">
-            Vos données sont stockées uniquement sur cet appareil.
-            Aucune connexion internet requise.
+          <h2 className="text-base font-bold text-foreground mb-2">Créer un profil local</h2>
+          <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+            Vos données restent sur cet appareil. Aucun compte en ligne requis.
           </p>
           <button
             onClick={() => setShowCreateForm(true)}
             className="btn-primary"
           >
-            Créer mon compte
+            Créer mon profil
           </button>
         </div>
       ) : showCreateForm ? (
-        <div className="glass-card p-6">
-          <h2 className="text-lg font-bold text-foreground mb-4">Nouveau compte</h2>
+        <div className="glass-card p-5">
+          <h2 className="text-base font-bold text-foreground mb-4">Nouveau profil</h2>
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-muted-foreground mb-1 block">Pseudo</label>
+              <label className="text-sm text-muted-foreground mb-1.5 block">Pseudo</label>
               <input
                 type="text"
                 value={newUsername}
@@ -143,10 +141,10 @@ const ProfilePage = () => {
           </div>
         </div>
       ) : (
-        <div className="glass-card p-6">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center">
-              <span className="text-2xl sm:text-3xl font-bold text-primary">
+        <div className="glass-card p-4 sm:p-5">
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center flex-shrink-0">
+              <span className="text-2xl font-bold text-primary">
                 {profile?.username.charAt(0).toUpperCase()}
               </span>
             </div>
@@ -157,7 +155,7 @@ const ProfilePage = () => {
                     type="text"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className="bg-secondary rounded-lg px-3 py-1.5 text-foreground text-lg font-bold w-full"
+                    className="bg-secondary rounded-lg px-3 py-1.5 text-foreground font-bold w-full"
                     maxLength={20}
                     autoFocus
                   />
@@ -170,7 +168,7 @@ const ProfilePage = () => {
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold text-foreground truncate">{profile?.username}</h2>
+                  <h2 className="text-lg font-bold text-foreground truncate">{profile?.username}</h2>
                   <button 
                     onClick={() => { setEditName(profile?.username || ''); setIsEditing(true); }}
                     className="p-1.5 text-muted-foreground hover:text-foreground"
@@ -179,25 +177,25 @@ const ProfilePage = () => {
                   </button>
                 </div>
               )}
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 Membre depuis {new Date(profile?.createdAt || '').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
               </p>
             </div>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-3 mt-6 pt-6 border-t border-border">
-            <div className="text-center p-3 rounded-xl bg-secondary/50">
-              <p className="text-xl sm:text-2xl font-bold text-foreground">{stats.total}</p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">Animes</p>
+          <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-border">
+            <div className="text-center p-2.5 rounded-xl bg-secondary/50">
+              <p className="text-lg font-bold text-foreground">{stats.total}</p>
+              <p className="text-[10px] text-muted-foreground">Animes</p>
             </div>
-            <div className="text-center p-3 rounded-xl bg-secondary/50">
-              <p className="text-xl sm:text-2xl font-bold text-foreground">{stats.totalEpisodes}</p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">Épisodes</p>
+            <div className="text-center p-2.5 rounded-xl bg-secondary/50">
+              <p className="text-lg font-bold text-foreground">{stats.totalEpisodes}</p>
+              <p className="text-[10px] text-muted-foreground">Épisodes</p>
             </div>
-            <div className="text-center p-3 rounded-xl bg-secondary/50">
-              <p className="text-xl sm:text-2xl font-bold text-foreground">{reminders.length}</p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">Rappels</p>
+            <div className="text-center p-2.5 rounded-xl bg-secondary/50">
+              <p className="text-lg font-bold text-foreground">{reminders.length}</p>
+              <p className="text-[10px] text-muted-foreground">Rappels</p>
             </div>
           </div>
         </div>
@@ -205,23 +203,22 @@ const ProfilePage = () => {
 
       {/* Preferences */}
       <div className="space-y-2">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider px-1">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
           Préférences
         </h3>
         
-        {/* Version preference */}
         <div className="glass-card p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-foreground">Version préférée</p>
-              <p className="text-xs text-muted-foreground">Filtrer le calendrier par défaut</p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-medium text-sm text-foreground">Version préférée</p>
+              <p className="text-[11px] text-muted-foreground">Filtre par défaut du calendrier</p>
             </div>
-            <div className="flex gap-1 bg-secondary/50 rounded-lg p-0.5">
+            <div className="flex gap-0.5 bg-secondary/50 rounded-lg p-0.5 flex-shrink-0">
               {(['all', 'vf', 'vostfr'] as const).map((v) => (
                 <button
                   key={v}
                   onClick={() => setVersionPreference(v)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${
                     versionPreference === v
                       ? 'bg-primary text-primary-foreground'
                       : 'text-muted-foreground'
@@ -237,60 +234,60 @@ const ProfilePage = () => {
 
       {/* Data Management */}
       <div className="space-y-2">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider px-1">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
           Données
         </h3>
         
         <button 
           onClick={handleExport}
-          className="w-full glass-card p-4 flex items-center gap-4 hover:bg-card-hover transition-colors active:scale-[0.99]"
+          className="w-full glass-card p-3.5 flex items-center gap-3 hover:bg-card-hover transition-colors active:scale-[0.99]"
         >
-          <div className="w-10 h-10 rounded-xl bg-rating-green/10 flex items-center justify-center">
-            <Download className="w-5 h-5 text-rating-green" />
+          <div className="w-9 h-9 rounded-xl bg-rating-green/10 flex items-center justify-center">
+            <Download className="w-4 h-4 text-rating-green" />
           </div>
           <div className="flex-1 text-left">
-            <p className="font-medium text-foreground">Exporter mes données</p>
-            <p className="text-xs text-muted-foreground">Sauvegarder en fichier JSON</p>
+            <p className="font-medium text-sm text-foreground">Exporter mes données</p>
+            <p className="text-[11px] text-muted-foreground">Sauvegarder en fichier JSON</p>
           </div>
         </button>
 
         <button 
           onClick={handleImport}
-          className="w-full glass-card p-4 flex items-center gap-4 hover:bg-card-hover transition-colors active:scale-[0.99]"
+          className="w-full glass-card p-3.5 flex items-center gap-3 hover:bg-card-hover transition-colors active:scale-[0.99]"
         >
-          <div className="w-10 h-10 rounded-xl bg-status-watching/10 flex items-center justify-center">
-            <Upload className="w-5 h-5 text-status-watching" />
+          <div className="w-9 h-9 rounded-xl bg-status-watching/10 flex items-center justify-center">
+            <Upload className="w-4 h-4 text-status-watching" />
           </div>
           <div className="flex-1 text-left">
-            <p className="font-medium text-foreground">Importer des données</p>
-            <p className="text-xs text-muted-foreground">Restaurer depuis un fichier</p>
+            <p className="font-medium text-sm text-foreground">Importer des données</p>
+            <p className="text-[11px] text-muted-foreground">Restaurer depuis un fichier</p>
           </div>
         </button>
 
         {profile && (
           <button 
             onClick={handleDeleteProfile}
-            className="w-full glass-card p-4 flex items-center gap-4 hover:bg-destructive/10 transition-colors active:scale-[0.99]"
+            className="w-full glass-card p-3.5 flex items-center gap-3 hover:bg-destructive/10 transition-colors active:scale-[0.99]"
           >
-            <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
-              <Trash2 className="w-5 h-5 text-destructive" />
+            <div className="w-9 h-9 rounded-xl bg-destructive/10 flex items-center justify-center">
+              <Trash2 className="w-4 h-4 text-destructive" />
             </div>
             <div className="flex-1 text-left">
-              <p className="font-medium text-destructive">Supprimer mon compte</p>
-              <p className="text-xs text-muted-foreground">Efface toutes les préférences</p>
+              <p className="font-medium text-sm text-destructive">Supprimer mon profil</p>
+              <p className="text-[11px] text-muted-foreground">Efface toutes les préférences</p>
             </div>
           </button>
         )}
       </div>
 
-      {/* Info */}
-      <div className="glass-card p-4 sm:p-6">
+      {/* Info Footer */}
+      <div className="glass-card p-4">
         <div className="flex items-start gap-3">
-          <Info className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-          <div className="text-xs sm:text-sm text-muted-foreground space-y-1">
-            <p>Données fournies par Jikan API (MyAnimeList non-officiel)</p>
-            <p>Toutes vos données sont stockées localement sur cet appareil.</p>
-            <p className="text-[10px] sm:text-xs opacity-70">Version 1.0.0</p>
+          <Shield className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+          <div className="text-[11px] text-muted-foreground space-y-1 leading-relaxed">
+            <p>Vos données sont stockées localement sur cet appareil.</p>
+            <p>Données fournies par Jikan API (MyAnimeList non-officiel).</p>
+            <p className="opacity-60">Version 1.0.0</p>
           </div>
         </div>
       </div>
