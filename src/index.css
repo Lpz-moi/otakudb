@@ -286,6 +286,10 @@
     animation: scaleIn 0.15s ease-out forwards;
   }
 
+  .animate-pulse-subtle {
+    animation: pulseSoft 2s ease-in-out infinite;
+  }
+
   @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -311,5 +315,35 @@
       opacity: 1;
       transform: scale(1);
     }
+  }
+
+  @keyframes pulseSoft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  @keyframes ripple {
+    to {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+
+  /* Premium hover effects */
+  .hover-lift {
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px -8px hsla(0 0% 0% / 0.3);
+  }
+
+  .hover-glow {
+    transition: box-shadow 0.2s ease-out;
+  }
+
+  .hover-glow:hover {
+    box-shadow: 0 0 20px -5px hsl(var(--primary) / 0.3);
   }
 }
