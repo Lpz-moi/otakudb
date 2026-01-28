@@ -1,24 +1,79 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, useMotionValue, useTransform, animate, PanInfo } from 'framer-motion';
-import { Heart, X, Info, Undo2, Star, Calendar, Play, Compass, ChevronDown, ChevronUp } from 'lucide-react';
+import { 
+  Heart, X, Info, Undo2, Star, Calendar, Play, Compass, ChevronDown, ChevronUp,
+  ArrowUpDown, Filter, RotateCcw, TrendingUp, TrendingDown, Hash
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getTopAnime, getSeasonalAnime, type Anime } from '@/services/jikanApi';
 import { useAnimeListStore } from '@/stores/animeListStore';
 import { useUserPreferencesStore } from '@/stores/userPreferencesStore';
 import { checkVFAvailability } from '@/services/vfDatabase';
 import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
 
 interface SwipeCard extends Anime {
   matchReason?: string;
   vfAvailable?: boolean;
+  _score?: number;
+}
+
+type SortOption = 
+  | 'relevance'
+  | 'popularity_desc'
+  | 'popularity_asc'
+  | 'score_desc'
+  | 'score_asc'
+  | 'date_desc'
+  | 'date_asc'
+  | 'alphabetical_asc'
+  | 'alphabetical_desc'
+  | 'episodes_desc'
+  | 'episodes_asc';
+
+interface FilterState {
+  genres: number[];
+  year: [number, number] | null;
+  status: string | null;
+  type: string | null;
+  episodes: [number, number] | null;
+  source: string | null;
 }
 
 const DiscoverPage = () => {
   const [cards, setCards] = useState<SwipeCard[]>([]);
+  const [allCards, setAllCards] = useState<SwipeCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [history, setHistory] = useState<{ card: SwipeCard; action: 'like' | 'skip' }[]>([]);
   const [showDetails, setShowDetails] = useState(false);
+  const [sortOption, setSortOption] = useState<SortOption>('relevance');
+  const [filters, setFilters] = useState<FilterState>({
+    genres: [],
+    year: null,
+    status: null,
+    type: null,
+    episodes: null,
+    source: null,
+  });
+  const [showFilters, setShowFilters] = useState(false);
   const [skippedIds, setSkippedIds] = useState<Set<number>>(() => {
     const saved = localStorage.getItem('otakudb-skipped');
     return saved ? new Set(JSON.parse(saved)) : new Set();
@@ -26,6 +81,13 @@ const DiscoverPage = () => {
 
   const { addToList, isInList, getItemsByStatus } = useAnimeListStore();
   const { versionPreference } = useUserPreferencesStore();
+
+  // Générer un seed quotidien pour varier les résultats
+  const dailySeed = useMemo(() => {
+    const today = new Date();
+    const dateString = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+    return dateString.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  }, []);
 
   // Get user's preferred genres based on their list
   const userPreferredGenres = useMemo(() => {
@@ -48,17 +110,26 @@ const DiscoverPage = () => {
       .map(([name]) => name);
   }, [getItemsByStatus]);
 
-  // Fetch recommendations
+  // Fetch recommendations avec pagination et variété
   useEffect(() => {
     const fetchRecommendations = async () => {
       setLoading(true);
       try {
-        const [seasonalRes, topRes] = await Promise.all([
+        // Récupérer plusieurs sources pour varier
+        const [seasonalRes, topPopularRes, topScoreRes, topAiringRes] = await Promise.all([
           getSeasonalAnime(),
-          getTopAnime(1, 'bypopularity'),
+          getTopAnime(currentPage, 'bypopularity'),
+          getTopAnime(currentPage, 'favorite'),
+          getTopAnime(currentPage, 'airing'),
         ]);
 
-        const allAnime = [...(seasonalRes.data || []), ...(topRes.data || [])];
+        // Combiner toutes les sources
+        const allAnime = [
+          ...(seasonalRes.data || []),
+          ...(topPopularRes.data || []),
+          ...(topScoreRes.data || []),
+          ...(topAiringRes.data || []),
+        ];
         
         // Dedupe and filter
         const seen = new Set<number>();
@@ -70,12 +141,41 @@ const DiscoverPage = () => {
           return true;
         });
 
+        // Appliquer les filtres
+        let filteredByFilters = filtered;
+        
+        if (filters.genres.length > 0) {
+          filteredByFilters = filteredByFilters.filter(anime =>
+            anime.genres?.some(g => filters.genres.includes(g.mal_id))
+          );
+        }
+
+        if (filters.year) {
+          filteredByFilters = filteredByFilters.filter(anime =>
+            anime.year && anime.year >= filters.year![0] && anime.year <= filters.year![1]
+          );
+        }
+
+        if (filters.status) {
+          filteredByFilters = filteredByFilters.filter(anime =>
+            anime.status?.toLowerCase().includes(filters.status!.toLowerCase())
+          );
+        }
+
+        if (filters.episodes) {
+          filteredByFilters = filteredByFilters.filter(anime =>
+            anime.episodes &&
+            anime.episodes >= filters.episodes![0] &&
+            anime.episodes <= filters.episodes![1]
+          );
+        }
+
         // Score and sort by relevance
-        const scored = filtered.map(anime => {
+        const scored = filteredByFilters.map(anime => {
           let score = 0;
           const reasons: string[] = [];
 
-          // Genre match
+          // Genre match (40% du score)
           const matchingGenres = anime.genres?.filter(g => 
             userPreferredGenres.includes(g.name)
           ) || [];
@@ -84,24 +184,27 @@ const DiscoverPage = () => {
             reasons.push(`Genre: ${matchingGenres[0].name}`);
           }
 
-          // Popularity
+          // Popularity (30% du score)
           if (anime.members && anime.members > 500000) {
             score += 15;
             reasons.push('Très populaire');
           }
 
-          // Score
+          // Score (20% du score)
           if (anime.score && anime.score >= 8) {
             score += 20;
             reasons.push(`Note: ${anime.score.toFixed(1)}`);
           }
 
-          // VF availability
+          // VF availability (10% du score)
           const vfCheck = checkVFAvailability(anime);
           if (vfCheck.hasVF && versionPreference === 'vf') {
             score += 25;
             reasons.push('Disponible en VF');
           }
+
+          // Random seed pour varier l'ordre
+          score += (anime.mal_id % 100) * 0.1 * (dailySeed % 10);
 
           return {
             ...anime,
@@ -111,9 +214,61 @@ const DiscoverPage = () => {
           };
         });
 
-        // Sort by score and take top cards
-        scored.sort((a, b) => b._score - a._score);
-        setCards(scored.slice(0, 50));
+        // Appliquer le tri
+        let sorted = [...scored];
+        
+        switch (sortOption) {
+          case 'popularity_desc':
+            sorted.sort((a, b) => (b.popularity || 9999) - (a.popularity || 9999));
+            break;
+          case 'popularity_asc':
+            sorted.sort((a, b) => (a.popularity || 0) - (b.popularity || 0));
+            break;
+          case 'score_desc':
+            sorted.sort((a, b) => (b.score || 0) - (a.score || 0));
+            break;
+          case 'score_asc':
+            sorted.sort((a, b) => (a.score || 0) - (b.score || 0));
+            break;
+          case 'date_desc':
+            sorted.sort((a, b) => (b.year || 0) - (a.year || 0));
+            break;
+          case 'date_asc':
+            sorted.sort((a, b) => (a.year || 0) - (b.year || 0));
+            break;
+          case 'alphabetical_asc':
+            sorted.sort((a, b) => 
+              (a.title_english || a.title || '').localeCompare(b.title_english || b.title || '')
+            );
+            break;
+          case 'alphabetical_desc':
+            sorted.sort((a, b) => 
+              (b.title_english || b.title || '').localeCompare(a.title_english || a.title || '')
+            );
+            break;
+          case 'episodes_desc':
+            sorted.sort((a, b) => (b.episodes || 0) - (a.episodes || 0));
+            break;
+          case 'episodes_asc':
+            sorted.sort((a, b) => (a.episodes || 0) - (b.episodes || 0));
+            break;
+          case 'relevance':
+          default:
+            sorted.sort((a, b) => (b._score || 0) - (a._score || 0));
+            break;
+        }
+
+        // Mélanger légèrement pour éviter toujours les mêmes résultats
+        if (sortOption === 'relevance') {
+          // Mélanger les 20 premiers avec un seed
+          const top = sorted.slice(0, 20);
+          const rest = sorted.slice(20);
+          const shuffled = top.sort(() => Math.random() - 0.5 + (dailySeed % 10) * 0.1);
+          sorted = [...shuffled, ...rest];
+        }
+
+        setAllCards(sorted);
+        setCards(sorted.slice(0, 50)); // Limiter à 50 cartes affichées
         setCurrentIndex(0);
       } catch (error) {
         console.error('Error fetching recommendations:', error);
@@ -124,7 +279,7 @@ const DiscoverPage = () => {
     };
 
     fetchRecommendations();
-  }, [isInList, skippedIds, userPreferredGenres, versionPreference]);
+  }, [isInList, skippedIds, userPreferredGenres, versionPreference, currentPage, sortOption, filters, dailySeed]);
 
   // Save skipped IDs
   useEffect(() => {
@@ -172,6 +327,27 @@ const DiscoverPage = () => {
     toast.success('Action annulée');
   }, [history]);
 
+  const resetFilters = () => {
+    setFilters({
+      genres: [],
+      year: null,
+      status: null,
+      type: null,
+      episodes: null,
+      source: null,
+    });
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters = useMemo(() => {
+    return filters.genres.length > 0 ||
+           filters.year !== null ||
+           filters.status !== null ||
+           filters.type !== null ||
+           filters.episodes !== null ||
+           filters.source !== null;
+  }, [filters]);
+
   if (loading) {
     return (
       <div className="page-container flex flex-col items-center justify-center min-h-[60vh]">
@@ -193,33 +369,154 @@ const DiscoverPage = () => {
         <p className="text-muted-foreground text-sm mb-6 max-w-xs leading-relaxed">
           Revenez demain pour découvrir de nouveaux animes adaptés à vos goûts.
         </p>
-        <button
-          onClick={() => {
-            setSkippedIds(new Set());
-            setCurrentIndex(0);
-          }}
-          className="btn-primary"
-        >
-          Recommencer
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              setSkippedIds(new Set());
+              setCurrentIndex(0);
+              setCurrentPage(prev => prev + 1);
+            }}
+            className="btn-primary"
+          >
+            Charger plus
+          </button>
+          <button
+            onClick={() => {
+              setSkippedIds(new Set());
+              setCurrentIndex(0);
+              setCurrentPage(1);
+            }}
+            className="btn-secondary"
+          >
+            Recommencer
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="page-container pb-24 sm:pb-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      {/* Header avec tri et filtres */}
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <Compass className="w-5 h-5 text-primary" />
           <h1 className="text-lg font-display font-bold">Découvrir</h1>
         </div>
-        <div className="text-xs text-muted-foreground bg-secondary/60 px-2 py-1 rounded-md">
-          {currentIndex + 1} / {cards.length}
+        <div className="flex items-center gap-2">
+          <div className="text-xs text-muted-foreground bg-secondary/60 px-2 py-1 rounded-md">
+            {currentIndex + 1} / {cards.length}
+          </div>
+          
+          {/* Bouton Filtres */}
+          <Sheet open={showFilters} onOpenChange={setShowFilters}>
+            <SheetTrigger asChild>
+              <Button
+                variant={hasActiveFilters ? "default" : "outline"}
+                size="sm"
+                className="relative"
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                Filtres
+                {hasActiveFilters && (
+                  <span className="ml-2 w-2 h-2 bg-primary rounded-full" />
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[80vh]">
+              <SheetHeader>
+                <SheetTitle>Filtres de recherche</SheetTitle>
+                <SheetDescription>
+                  Affinez vos recommandations selon vos préférences
+                </SheetDescription>
+              </SheetHeader>
+              <div className="mt-6 space-y-6">
+                {/* Année */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Année: {filters.year ? `${filters.year[0]} - ${filters.year[1]}` : 'Toutes'}
+                  </label>
+                  <Slider
+                    value={filters.year || [1960, 2026]}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, year: value as [number, number] }))}
+                    min={1960}
+                    max={2026}
+                    step={1}
+                    className="w-full"
+                  />
+                </div>
+
+                {/* Statut */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Statut</label>
+                  <Select
+                    value={filters.status || 'all'}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, status: value === 'all' ? null : value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous</SelectItem>
+                      <SelectItem value="airing">En cours</SelectItem>
+                      <SelectItem value="complete">Terminé</SelectItem>
+                      <SelectItem value="upcoming">À venir</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Nombre d'épisodes */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Épisodes: {filters.episodes ? `${filters.episodes[0]} - ${filters.episodes[1]}` : 'Tous'}
+                  </label>
+                  <Slider
+                    value={filters.episodes || [1, 1000]}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, episodes: value as [number, number] }))}
+                    min={1}
+                    max={1000}
+                    step={1}
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <Button onClick={resetFilters} variant="outline" className="flex-1">
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Réinitialiser
+                  </Button>
+                  <Button onClick={() => setShowFilters(false)} className="flex-1">
+                    Appliquer
+                  </Button>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          {/* Sélecteur de tri */}
+          <Select value={sortOption} onValueChange={(value) => setSortOption(value as SortOption)}>
+            <SelectTrigger className="w-[140px]">
+              <ArrowUpDown className="w-4 h-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="relevance">Pertinence</SelectItem>
+              <SelectItem value="popularity_desc">Popularité ↓</SelectItem>
+              <SelectItem value="popularity_asc">Popularité ↑</SelectItem>
+              <SelectItem value="score_desc">Note ↓</SelectItem>
+              <SelectItem value="score_asc">Note ↑</SelectItem>
+              <SelectItem value="date_desc">Date ↓</SelectItem>
+              <SelectItem value="date_asc">Date ↑</SelectItem>
+              <SelectItem value="alphabetical_asc">A-Z</SelectItem>
+              <SelectItem value="alphabetical_desc">Z-A</SelectItem>
+              <SelectItem value="episodes_desc">Épisodes ↓</SelectItem>
+              <SelectItem value="episodes_asc">Épisodes ↑</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      {/* Card Stack - Mobile optimized height */}
+      {/* Card Stack */}
       <div className="relative" style={{ height: 'calc(100dvh - 260px)', minHeight: '380px', maxHeight: '520px' }}>
         <SwipeableCard
           key={currentCard.mal_id}
@@ -233,7 +530,6 @@ const DiscoverPage = () => {
 
       {/* Action Buttons */}
       <div className="flex items-center justify-center gap-3 mt-5">
-        {/* Undo */}
         <button
           onClick={handleUndo}
           disabled={history.length === 0}
@@ -243,7 +539,6 @@ const DiscoverPage = () => {
           <Undo2 className="w-4 h-4" />
         </button>
 
-        {/* Skip */}
         <button
           onClick={handleSkip}
           className="w-14 h-14 rounded-full bg-card border-2 border-destructive/60 flex items-center justify-center text-destructive active:scale-95 transition-transform"
@@ -252,7 +547,6 @@ const DiscoverPage = () => {
           <X className="w-7 h-7" />
         </button>
 
-        {/* Info */}
         <Link
           to={`/anime/${currentCard.mal_id}`}
           className="w-11 h-11 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-primary active:scale-95 transition-all"
@@ -261,7 +555,6 @@ const DiscoverPage = () => {
           <Info className="w-4 h-4" />
         </Link>
 
-        {/* Like */}
         <button
           onClick={handleLike}
           className="w-14 h-14 rounded-full bg-primary flex items-center justify-center text-primary-foreground active:scale-95 transition-transform"
@@ -325,7 +618,6 @@ const SwipeableCard = ({ card, onLike, onSkip, showDetails, onToggleDetails }: S
       whileTap={{ cursor: 'grabbing' }}
     >
       <div className="w-full h-full rounded-2xl overflow-hidden bg-card shadow-xl relative">
-        {/* Background Image */}
         <img
           src={card.images.webp?.large_image_url || card.images.jpg?.large_image_url}
           alt={card.title}
@@ -333,10 +625,8 @@ const SwipeableCard = ({ card, onLike, onSkip, showDetails, onToggleDetails }: S
           draggable={false}
         />
         
-        {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
         
-        {/* Like Overlay */}
         <motion.div 
           className="absolute inset-0 bg-primary/20 flex items-center justify-center pointer-events-none"
           style={{ opacity: likeOpacity }}
@@ -346,7 +636,6 @@ const SwipeableCard = ({ card, onLike, onSkip, showDetails, onToggleDetails }: S
           </div>
         </motion.div>
         
-        {/* Skip Overlay */}
         <motion.div 
           className="absolute inset-0 bg-destructive/20 flex items-center justify-center pointer-events-none"
           style={{ opacity: skipOpacity }}
@@ -356,7 +645,6 @@ const SwipeableCard = ({ card, onLike, onSkip, showDetails, onToggleDetails }: S
           </div>
         </motion.div>
 
-        {/* Top Badges */}
         <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
           {card.score && (
             <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-black/50 backdrop-blur-sm text-rating-gold text-sm font-medium">
@@ -372,9 +660,7 @@ const SwipeableCard = ({ card, onLike, onSkip, showDetails, onToggleDetails }: S
           )}
         </div>
 
-        {/* Content */}
         <div className="absolute bottom-0 left-0 right-0 p-4">
-          {/* Expand Button */}
           <button
             onClick={(e) => {
               e.stopPropagation();

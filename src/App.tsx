@@ -1,10 +1,10 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/layout/Layout";
 import { useEffect } from "react";
+import ErrorBoundary from "./ErrorBoundary";
 import HomePage from "./pages/HomePage";
 import SearchPage from "./pages/SearchPage";
 import ListsPage from "./pages/ListsPage";
@@ -12,6 +12,8 @@ import AnimeDetailPage from "./pages/AnimeDetailPage";
 import StatsPage from "./pages/StatsPage";
 import ProfilePage from "./pages/ProfilePage";
 import DiscoverPage from "./pages/DiscoverPage";
+import AuthSuccessPage from "./pages/AuthSuccessPage";
+import AuthErrorPage from "./pages/AuthErrorPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,11 +36,11 @@ const App = () => {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <Toaster />
+          <Sonner />
           <Routes>
             <Route element={<Layout />}>
               <Route path="/" element={<HomePage />} />
@@ -48,12 +50,14 @@ const App = () => {
               <Route path="/anime/:id" element={<AnimeDetailPage />} />
               <Route path="/stats" element={<StatsPage />} />
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/auth/success" element={<AuthSuccessPage />} />
+              <Route path="/auth/error" element={<AuthErrorPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+        </QueryClientProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 };
 

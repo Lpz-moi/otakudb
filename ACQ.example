@@ -1,0 +1,19 @@
+# Discord OAuth Configuration
+DISCORD_CLIENT_ID=your_discord_client_id_here
+DISCORD_CLIENT_SECRET=your_discord_client_secret_here
+DISCORD_REDIRECT_URI=http://localhost:3001/api/auth/discord/callback
+DISCORD_SERVER_ID=your_discord_server_id_here
+DISCORD_BOT_TOKEN=your_discord_bot_token_here
+
+# JWT Secret (changez en production)
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+
+# Server Configuration
+PORT=3001
+NODE_ENV=development
+
+# Frontend URL
+FRONTEND_URL=http://localhost:8080
+
+# API URL (pour le frontend)
+VITE_API_URL=http://localhost:3001
