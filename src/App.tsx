@@ -5,6 +5,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/layout/Layout";
 import { useEffect } from "react";
 import ErrorBoundary from "./ErrorBoundary";
+import { useAuthStore } from "./stores/authStore";
+import { useAnimeListDiscordStore } from "./stores/animeListStoreDiscord";
 import HomePage from "./pages/HomePage";
 import SearchPage from "./pages/SearchPage";
 import ListsPage from "./pages/ListsPage";
@@ -23,14 +25,39 @@ const registerServiceWorker = async () => {
   if ('serviceWorker' in navigator) {
     try {
       await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-      console.log('Service Worker registered');
+      console.log('✅ Service Worker registered');
     } catch (error) {
-      console.log('Service Worker registration failed:', error);
+      console.log('⚠️ Service Worker registration failed:', error);
     }
   }
 };
 
 const App = () => {
+  const { isAuthenticated, checkAuth } = useAuthStore();
+  const { syncFromBackend } = useAnimeListDiscordStore();
+
+  // Initialiser l'authentification et la synchronisation
+  useEffect(() => {
+    const initialize = async () => {
+      console.log('🚀 Initializing OtakuDB...');
+      
+      // Vérifier l'authentification
+      await checkAuth();
+    };
+
+    initialize();
+  }, [checkAuth]);
+
+  // Synchroniser la liste d'animes quand l'utilisateur se connecte
+  useEffect(() => {
+    if (isAuthenticated) {
+      console.log('🔄 User authenticated, syncing anime list...');
+      syncFromBackend().catch(error => {
+        console.error('❌ Sync error:', error);
+      });
+    }
+  }, [isAuthenticated, syncFromBackend]);
+
   useEffect(() => {
     registerServiceWorker();
   }, []);

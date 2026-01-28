@@ -4,42 +4,43 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  server: {
-    host: "::",
-    port: 8080,
-    hmr: {
-      overlay: false,
+export default defineConfig(({ mode }) => {
+  return {
+    server: {
+      host: "::",
+      port: 8080,
+      // HMR désactivé pour éviter les erreurs de connection
+      hmr: false,
     },
-  },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
+    plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+      },
     },
-  },
-  build: {
-    sourcemap: false, // Désactiver les source maps en production pour éviter les erreurs
-  },
-  optimizeDeps: {
-    force: true, // Forcer la réoptimisation
-    include: [
-      'react',
-      'react-dom',
-      'react-router-dom',
-      '@tanstack/react-query',
-      'next-themes',
-      'lucide-react',
-    ],
-    esbuildOptions: {
-      // Ignorer les source maps corrompus
+    build: {
+      sourcemap: false, // Désactiver les source maps en production pour éviter les erreurs
+    },
+    optimizeDeps: {
+      force: true, // Forcer la réoptimisation
+      include: [
+        'react',
+        'react-dom',
+        'react-router-dom',
+        '@tanstack/react-query',
+        'next-themes',
+        'lucide-react',
+      ],
+      esbuildOptions: {
+        // Ignorer les source maps corrompus
+        legalComments: 'none',
+        sourcemap: false,
+      },
+    },
+    esbuild: {
+      // Ignorer les erreurs de source map
       legalComments: 'none',
       sourcemap: false,
     },
-  },
-  esbuild: {
-    // Ignorer les erreurs de source map
-    legalComments: 'none',
-    sourcemap: false,
-  },
-}));
+  };
+});

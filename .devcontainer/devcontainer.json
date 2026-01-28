@@ -1,0 +1,40 @@
+{
+  "name": "OtakuDB - Anime Management",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
+  
+  "forwardPorts": [4000, 8080, 5173],
+  
+  "portsAttributes": {
+    "4000": {
+      "label": "Backend API",
+      "onAutoForward": "notify",
+      "requireLocalPort": false
+    },
+    "8080": {
+      "label": "Frontend (Vite)",
+      "onAutoForward": "openBrowser",
+      "requireLocalPort": false
+    },
+    "5173": {
+      "label": "Vite HMR",
+      "onAutoForward": "ignore"
+    }
+  },
+  
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss"
+      ],
+      "settings": {
+        "editor.formatOnSave": true
+      }
+    }
+  },
+  
+  "remoteUser": "node",
+  
+  "postCreateCommand": "npm install"
+}

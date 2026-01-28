@@ -32,6 +32,17 @@ self.addEventListener('activate', (event) => {
           .filter((name) => name !== CACHE_NAME && name !== STATIC_CACHE && name !== API_CACHE)
           .map((name) => caches.delete(name))
       );
+    }).then(() => {
+      // Clean localhost:4000 requests from API cache
+      return caches.open(API_CACHE).then((cache) => {
+        return cache.keys().then((requests) => {
+          return Promise.all(
+            requests
+              .filter(req => req.url.includes('localhost:4000'))
+              .map(req => cache.delete(req))
+          );
+        });
+      });
     })
   );
   self.clients.claim();
@@ -56,8 +67,18 @@ self.addEventListener('fetch', (event) => {
           if (cached) {
             return cached;
           }
-          throw error;
+          // Return a generic error response instead of throwing
+          return new Response('Service unavailable', {
+            status: 503,
+            statusText: 'Service Unavailable',
+          });
         }
+      }).catch(() => {
+        // Ensure we always return a Response
+        return new Response('Service unavailable', {
+          status: 503,
+          statusText: 'Service Unavailable',
+        });
       })
     );
     return;
@@ -88,9 +109,26 @@ self.addEventListener('fetch', (event) => {
   
   // Default - network first
   event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
-    })
+    fetch(event.request)
+      .then((response) => {
+        // Ensure we have a valid response
+        if (!response || response.status === 0) {
+          throw new Error('Invalid response');
+        }
+        return response;
+      })
+      .catch(async () => {
+        // Try to get from cache
+        const cached = await caches.match(event.request);
+        if (cached) {
+          return cached;
+        }
+        // Return a proper error response
+        return new Response('Service unavailable', {
+          status: 503,
+          statusText: 'Service Unavailable',
+        });
+      })
   );
 });
 

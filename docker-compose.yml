@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # Backend Node.js + Express
+  backend:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      FRONTEND_URL: http://localhost:5173
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key}
+      DATABASE_URL: ./data/otakudb.db
+      VITE_API_URL: http://localhost:3001
+    volumes:
+      - ./server:/app/server
+      - ./data:/app/data
+    depends_on:
+      - frontend
+
+  # Frontend Vite
+  frontend:
+    build:
+      context: .
+      target: frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:3001
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./index.html:/app/index.html
+
+volumes:
+  data:
+    driver: local
