@@ -53,29 +53,29 @@ const HomePage = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-gradient-to-br from-primary/8 via-primary/4 to-transparent rounded-2xl p-4 sm:p-5 border border-primary/15"
+            className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-2xl p-4 sm:p-5 border border-primary/20"
           >
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
                 <Tv className="w-5 h-5 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="font-display font-bold text-foreground text-base">Bienvenue sur OtakuDB</h2>
                 <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                  Suivez vos animes préférés, recevez des rappels et ne manquez plus jamais un épisode.
+                  Suivez vos animes preferes, recevez des rappels et ne manquez plus jamais un episode.
                 </p>
                 <div className="flex flex-wrap gap-2 mt-3">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-lg bg-secondary/80 text-muted-foreground font-medium">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-lg bg-primary/10 text-primary font-medium">
                     <Calendar className="w-3 h-3" />
                     Calendrier intelligent
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-lg bg-secondary/80 text-muted-foreground font-medium">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-lg bg-primary/10 text-primary font-medium">
                     <Bell className="w-3 h-3" />
-                    Rappels personnalisés
+                    Rappels personnalises
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-lg bg-secondary/80 text-muted-foreground font-medium">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-lg bg-primary/10 text-primary font-medium">
                     <Globe className="w-3 h-3" />
-                    Horaires français
+                    Horaires francais
                   </span>
                 </div>
               </div>

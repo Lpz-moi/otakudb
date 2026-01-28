@@ -107,11 +107,11 @@ const SearchPage = () => {
           className="space-y-4"
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
               <SearchIcon className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-xl font-display font-bold">Recherche</h1>
+              <h1 className="text-xl font-display font-bold text-foreground">Recherche</h1>
               <p className="text-sm text-muted-foreground">Trouvez votre prochain anime</p>
             </div>
           </div>

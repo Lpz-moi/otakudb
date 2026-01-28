@@ -38,11 +38,11 @@ export const Header = () => {
     : null;
 
   return (
-    <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border md:hidden">
+    <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/50 md:hidden">
       <div className="flex items-center justify-between px-4 py-3">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-            <Tv className="w-4 h-4 text-primary" />
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
+            <Tv className="w-4 h-4 text-primary-foreground" />
           </div>
           <span className="text-lg font-display font-bold text-foreground">
             Otaku<span className="text-primary">DB</span>

@@ -31,11 +31,11 @@ const StatsPage = () => {
     .slice(0, 5);
 
   const statCards = [
-    { label: 'Total', value: stats.total, icon: Tv, color: 'text-foreground', bg: 'bg-secondary' },
-    { label: 'En cours', value: stats.watching, icon: Play, color: 'text-status-watching', bg: 'bg-status-watching/10' },
-    { label: 'Terminés', value: stats.completed, icon: Check, color: 'text-status-completed', bg: 'bg-status-completed/10' },
-    { label: 'À voir', value: stats.planned, icon: Clock, color: 'text-status-planned', bg: 'bg-status-planned/10' },
-    { label: 'Favoris', value: stats.favorites, icon: Heart, color: 'text-status-favorites', bg: 'bg-status-favorites/10' },
+    { label: 'Total', value: stats.total, icon: Tv, color: 'text-primary', bg: 'bg-primary/10' },
+    { label: 'En cours', value: stats.watching, icon: Play, color: 'text-primary', bg: 'bg-primary/10' },
+    { label: 'Termines', value: stats.completed, icon: Check, color: 'text-status-completed', bg: 'bg-status-completed/10' },
+    { label: 'A voir', value: stats.planned, icon: Clock, color: 'text-muted-foreground', bg: 'bg-secondary' },
+    { label: 'Favoris', value: stats.favorites, icon: Heart, color: 'text-primary', bg: 'bg-primary/10' },
   ];
 
   // Calculate estimated watch time (avg 24min per episode)
@@ -52,12 +52,12 @@ const StatsPage = () => {
           animate={{ opacity: 1, y: 0 }}
           className="flex items-center gap-3"
         >
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
             <BarChart3 className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-xl font-display font-bold">Statistiques</h1>
-            <p className="text-sm text-muted-foreground">Vos données de visionnage</p>
+            <h1 className="text-xl font-display font-bold text-foreground">Statistiques</h1>
+            <p className="text-sm text-muted-foreground">Vos donnees de visionnage</p>
           </div>
         </motion.div>
 
