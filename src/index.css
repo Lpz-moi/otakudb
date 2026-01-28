@@ -6,62 +6,64 @@
 
 @layer base {
   :root {
-    --background: 222 20% 7%;
-    --foreground: 210 20% 95%;
+    /* Orange #FF6B35 = hsl(16, 100%, 60%) | Black #1A1A1A = hsl(0, 0%, 10%) */
+    --background: 0 0% 6%;
+    --foreground: 0 0% 95%;
 
-    --card: 222 18% 10%;
-    --card-foreground: 210 20% 95%;
-    --card-hover: 222 18% 13%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 95%;
+    --card-hover: 0 0% 14%;
 
-    --popover: 222 18% 10%;
-    --popover-foreground: 210 20% 95%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 24 85% 55%;
-    --primary-foreground: 222 20% 7%;
+    --primary: 16 100% 60%;
+    --primary-foreground: 0 0% 6%;
 
-    --secondary: 215 20% 16%;
-    --secondary-foreground: 210 20% 90%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 90%;
 
-    --muted: 215 15% 16%;
-    --muted-foreground: 215 15% 55%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 55%;
 
-    --accent: 215 20% 20%;
-    --accent-foreground: 210 20% 95%;
+    --accent: 0 0% 18%;
+    --accent-foreground: 0 0% 95%;
 
     --destructive: 0 70% 50%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 215 15% 18%;
-    --input: 215 15% 20%;
-    --ring: 24 85% 55%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 16 100% 60%;
 
     --radius: 0.75rem;
 
-    /* Custom tokens */
-    --gradient-card: linear-gradient(135deg, hsl(222 18% 12%) 0%, hsl(222 18% 8%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(222 20% 10%) 0%, hsl(222 20% 5%) 100%);
-    --gradient-orange: linear-gradient(135deg, hsl(24 85% 55%) 0%, hsl(30 90% 60%) 100%);
-    --shadow-card: 0 4px 20px -4px hsla(0 0% 0% / 0.35);
+    /* Custom tokens - Orange & Black */
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 12%) 0%, hsl(0 0% 8%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(0 0% 10%) 0%, hsl(0 0% 5%) 100%);
+    --gradient-orange: linear-gradient(135deg, hsl(16 100% 60%) 0%, hsl(25 100% 55%) 100%);
+    --shadow-card: 0 4px 20px -4px hsla(0 0% 0% / 0.5);
+    --shadow-glow: 0 0 30px -5px hsl(16 100% 60% / 0.3);
 
     /* Rating colors */
     --rating-gold: 45 100% 50%;
     --rating-green: 142 70% 45%;
     --rating-red: 0 70% 50%;
 
-    /* Status colors */
-    --status-watching: 200 80% 50%;
+    /* Status colors - Orange theme */
+    --status-watching: 16 100% 60%;
     --status-completed: 142 70% 45%;
-    --status-planned: 280 60% 60%;
-    --status-favorites: 24 85% 55%;
+    --status-planned: 0 0% 60%;
+    --status-favorites: 16 100% 60%;
 
-    --sidebar-background: 222 18% 10%;
-    --sidebar-foreground: 210 20% 95%;
-    --sidebar-primary: 24 85% 55%;
-    --sidebar-primary-foreground: 222 20% 7%;
-    --sidebar-accent: 215 20% 18%;
-    --sidebar-accent-foreground: 210 20% 95%;
-    --sidebar-border: 215 15% 18%;
-    --sidebar-ring: 24 85% 55%;
+    --sidebar-background: 0 0% 10%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 16 100% 60%;
+    --sidebar-primary-foreground: 0 0% 6%;
+    --sidebar-accent: 0 0% 18%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 16 100% 60%;
     
     /* Safe area padding */
     --safe-area-inset-top: env(safe-area-inset-top, 0px);
@@ -138,7 +140,7 @@
   }
 
   .score-badge.medium {
-    @apply bg-[hsl(var(--rating-gold))]/20 text-[hsl(var(--rating-gold))];
+    @apply bg-primary/20 text-primary;
   }
 
   .score-badge.low {
@@ -151,7 +153,7 @@
   }
 
   .status-watching {
-    @apply bg-[hsl(var(--status-watching))]/20 text-[hsl(var(--status-watching))];
+    @apply bg-primary/20 text-primary;
   }
 
   .status-completed {
@@ -159,11 +161,11 @@
   }
 
   .status-planned {
-    @apply bg-[hsl(var(--status-planned))]/20 text-[hsl(var(--status-planned))];
+    @apply bg-muted text-muted-foreground;
   }
 
   .status-favorites {
-    @apply bg-[hsl(var(--status-favorites))]/20 text-[hsl(var(--status-favorites))];
+    @apply bg-primary/20 text-primary;
   }
 
   /* Buttons */

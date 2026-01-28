@@ -27,7 +27,7 @@ export const AnimeCardPremium = ({
   const getScoreClass = (score: number | null) => {
     if (!score) return '';
     if (score >= 8) return 'high';
-    if (score >= 6) return 'medium';
+    if (score >= 6.5) return 'medium';
     return 'low';
   };
 
@@ -61,10 +61,7 @@ export const AnimeCardPremium = ({
     >
       <Link
         to={`/anime/${anime.mal_id}`}
-        className={`group block relative overflow-hidden rounded-xl bg-card border border-border/20 transition-all duration-300 hover:border-border/40 active:scale-[0.98] ${className}`}
-        style={{
-          boxShadow: '0 2px 8px -2px hsla(0 0% 0% / 0.25)',
-        }}
+        className={`group block relative overflow-hidden rounded-xl bg-card border border-border/30 transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 active:scale-[0.98] ${className}`}
       >
         {/* Image Container with 3D hover effect */}
         <div className="relative aspect-[3/4] overflow-hidden rounded-t-xl">

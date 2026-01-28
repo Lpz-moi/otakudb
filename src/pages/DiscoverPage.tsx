@@ -1,436 +1,393 @@
-import { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Heart, Star, Calendar, Play, Filter, X, Search, TrendingUp, Zap,
-  BookOpen, Clock, Users, Sparkles, Compass
-} from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from 'framer-motion';
+import { Heart, X, Star, Play, RotateCcw, Sparkles, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getTopAnime, getSeasonalAnime, type Anime } from '@/services/jikanApi';
 import { useAnimeListStore } from '@/stores/animeListStore';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
 import { toast } from 'sonner';
 
-interface FilterOptions {
-  status: 'all' | 'airing' | 'completed';
-  type: 'all' | 'tv' | 'movie' | 'special' | 'ova';
-  season: 'all' | 'winter' | 'spring' | 'summer' | 'fall';
-  year: 'all' | string;
-  sortBy: 'popular' | 'score' | 'recent' | 'trending';
-  scoreMin: number;
-  searchTerm: string;
+interface SwipeCardProps {
+  anime: Anime;
+  onSwipe: (direction: 'left' | 'right') => void;
+  isActive: boolean;
+  index: number;
 }
 
-const SkeletonCard = () => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl overflow-hidden h-80 animate-pulse"
-  >
-    <div className="h-40 bg-gray-700" />
-    <div className="p-4 space-y-2">
-      <div className="h-4 bg-gray-700 rounded w-3/4" />
-      <div className="h-3 bg-gray-700 rounded w-1/2" />
-    </div>
-  </motion.div>
-);
+const SwipeCard = ({ anime, onSwipe, isActive, index }: SwipeCardProps) => {
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-200, 200], [-25, 25]);
+  const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0.5, 1, 1, 1, 0.5]);
+  
+  // Visual indicators for swipe direction
+  const likeOpacity = useTransform(x, [0, 100], [0, 1]);
+  const nopeOpacity = useTransform(x, [-100, 0], [1, 0]);
 
-const AnimeCard = ({ anime, onLike, isFavorite }: {
-  anime: Anime;
-  onLike: (anime: Anime) => void;
-  isFavorite: boolean;
-}) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    whileHover={{ y: -8 }}
-    className="group relative h-80 rounded-xl overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 cursor-pointer shadow-lg hover:shadow-2xl transition-shadow"
-  >
-    {/* Background Image */}
-    <div className="absolute inset-0">
-      <img
-        src={anime.images?.jpg?.image_url}
-        alt={anime.title}
-        className="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-300"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
-    </div>
+  const handleDragEnd = (_: any, info: PanInfo) => {
+    const threshold = 100;
+    if (info.offset.x > threshold) {
+      onSwipe('right');
+    } else if (info.offset.x < -threshold) {
+      onSwipe('left');
+    }
+  };
 
-    {/* Content */}
-    <div className="relative h-full flex flex-col justify-between p-4 text-white">
-      {/* Top Section - Info */}
-      <div className="flex items-start justify-between">
-        <div className="flex gap-2 flex-wrap">
-          {anime.score && (
+  const scale = isActive ? 1 : 0.95 - index * 0.02;
+  const yOffset = isActive ? 0 : index * 8;
+  const zIndex = 10 - index;
+
+  return (
+    <motion.div
+      className="absolute inset-0 cursor-grab active:cursor-grabbing"
+      style={{
+        x: isActive ? x : 0,
+        rotate: isActive ? rotate : 0,
+        opacity: isActive ? opacity : 1 - index * 0.15,
+        scale,
+        y: yOffset,
+        zIndex,
+      }}
+      drag={isActive ? 'x' : false}
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.9}
+      onDragEnd={handleDragEnd}
+      initial={{ scale: 0.9, opacity: 0 }}
+      animate={{ scale, opacity: 1 - index * 0.15 }}
+      exit={{
+        x: x.get() > 0 ? 400 : -400,
+        opacity: 0,
+        transition: { duration: 0.3 }
+      }}
+      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+    >
+      <div className="relative w-full h-full rounded-3xl overflow-hidden bg-card border border-border/30 shadow-xl">
+        {/* Main Image */}
+        <div className="absolute inset-0">
+          <img
+            src={anime.images?.webp?.large_image_url || anime.images?.jpg?.large_image_url}
+            alt={anime.title}
+            className="w-full h-full object-cover"
+            draggable={false}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+        </div>
+
+        {/* Like/Nope Indicators */}
+        {isActive && (
+          <>
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="flex items-center gap-1 bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded-full text-xs font-bold backdrop-blur-sm"
+              className="absolute top-8 left-6 px-6 py-2 rounded-xl border-4 border-green-500 rotate-[-15deg]"
+              style={{ opacity: likeOpacity }}
             >
-              <Star size={12} className="fill-current" />
-              {anime.score.toFixed(1)}
+              <span className="text-green-500 text-3xl font-black tracking-wide">LIKE</span>
             </motion.div>
+            <motion.div
+              className="absolute top-8 right-6 px-6 py-2 rounded-xl border-4 border-red-500 rotate-[15deg]"
+              style={{ opacity: nopeOpacity }}
+            >
+              <span className="text-red-500 text-3xl font-black tracking-wide">NOPE</span>
+            </motion.div>
+          </>
+        )}
+
+        {/* Score Badge */}
+        {anime.score && (
+          <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full">
+            <Star className="w-4 h-4 text-primary fill-primary" />
+            <span className="text-white font-bold">{anime.score.toFixed(1)}</span>
+          </div>
+        )}
+
+        {/* Content */}
+        <div className="absolute bottom-0 left-0 right-0 p-6 space-y-3">
+          {/* Title */}
+          <h2 className="text-2xl sm:text-3xl font-bold text-white leading-tight line-clamp-2">
+            {anime.title_english || anime.title}
+          </h2>
+          
+          {/* Japanese title */}
+          {anime.title_japanese && (
+            <p className="text-sm text-white/60">{anime.title_japanese}</p>
           )}
-          {anime.aired?.from && (
-            <div className="flex items-center gap-1 bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full text-xs font-bold backdrop-blur-sm">
-              <Calendar size={12} />
-              {new Date(anime.aired.from).getFullYear()}
+          
+          {/* Meta info */}
+          <div className="flex flex-wrap items-center gap-2">
+            {anime.episodes && (
+              <span className="inline-flex items-center gap-1 bg-white/10 backdrop-blur-sm text-white text-sm px-3 py-1 rounded-full">
+                <Play className="w-3 h-3" />
+                {anime.episodes} eps
+              </span>
+            )}
+            {anime.year && (
+              <span className="bg-white/10 backdrop-blur-sm text-white text-sm px-3 py-1 rounded-full">
+                {anime.year}
+              </span>
+            )}
+            {anime.status && (
+              <span className={`text-sm px-3 py-1 rounded-full ${
+                anime.status === 'Currently Airing' 
+                  ? 'bg-primary/20 text-primary' 
+                  : 'bg-white/10 text-white'
+              }`}>
+                {anime.status === 'Currently Airing' ? 'En cours' : 'Termine'}
+              </span>
+            )}
+          </div>
+          
+          {/* Genres */}
+          {anime.genres && anime.genres.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {anime.genres.slice(0, 3).map(genre => (
+                <span 
+                  key={genre.mal_id}
+                  className="bg-primary/20 text-primary text-xs font-medium px-2.5 py-1 rounded-full"
+                >
+                  {genre.name}
+                </span>
+              ))}
             </div>
           )}
-        </div>
-        <motion.button
-          whileHover={{ scale: 1.2 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={() => onLike(anime)}
-          className={`p-2 rounded-full backdrop-blur-sm transition-colors ${
-            isFavorite
-              ? 'bg-red-500/80 text-white'
-              : 'bg-white/10 text-gray-300 hover:bg-white/20'
-          }`}
-        >
-          <Heart size={20} className={isFavorite ? 'fill-current' : ''} />
-        </motion.button>
-      </div>
-
-      {/* Bottom Section - Details */}
-      <div className="space-y-3">
-        <div>
-          <h3 className="text-lg font-bold line-clamp-2 group-hover:text-purple-300 transition-colors">
-            {anime.title}
-          </h3>
-          {anime.title_japanese && (
-            <p className="text-xs text-gray-400 mt-1">{anime.title_japanese}</p>
+          
+          {/* Synopsis preview */}
+          {anime.synopsis && (
+            <p className="text-white/70 text-sm line-clamp-2 leading-relaxed">
+              {anime.synopsis}
+            </p>
           )}
-        </div>
 
-        <div className="flex items-center justify-between text-xs text-gray-300">
-          <div className="flex items-center gap-1">
-            <Play size={14} />
-            <span>{anime.episodes || '?'} episodes</span>
-          </div>
+          {/* Details link */}
           <Link
             to={`/anime/${anime.mal_id}`}
-            className="flex items-center gap-1 px-3 py-1 rounded-full bg-purple-600/80 hover:bg-purple-500 transition-colors font-medium"
+            className="inline-flex items-center gap-2 text-primary text-sm font-medium mt-2"
+            onClick={(e) => e.stopPropagation()}
           >
-            View <Sparkles size={12} />
+            <Info className="w-4 h-4" />
+            Voir les details
           </Link>
         </div>
       </div>
-    </div>
-  </motion.div>
-);
+    </motion.div>
+  );
+};
 
 export default function DiscoverPage() {
   const [animes, setAnimes] = useState<Anime[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState<FilterOptions>({
-    status: 'all',
-    type: 'all',
-    season: 'all',
-    year: 'all',
-    sortBy: 'popular',
-    scoreMin: 5,
-    searchTerm: '',
-  });
+  const [history, setHistory] = useState<{ anime: Anime; direction: 'left' | 'right' }[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const { favorites = [], addFavorite, removeFavorite } = useAnimeListStore();
+  const { addToList, isInList } = useAnimeListStore();
 
-  // Charger les animés
+  // Load animes
   useEffect(() => {
     const loadAnimes = async () => {
       setLoading(true);
       try {
-        const data = filters.season !== 'all'
-          ? await getSeasonalAnime(filters.season)
-          : await getTopAnime();
-        setAnimes(data?.data || []);
+        const [topRes, seasonalRes] = await Promise.all([
+          getTopAnime(1, 'bypopularity'),
+          getSeasonalAnime(),
+        ]);
+        
+        // Combine and shuffle
+        const combined = [...(seasonalRes?.data || []), ...(topRes?.data || [])];
+        const uniqueAnimes = combined.filter((anime, index, self) => 
+          index === self.findIndex(a => a.mal_id === anime.mal_id)
+        );
+        
+        // Shuffle array
+        const shuffled = uniqueAnimes.sort(() => Math.random() - 0.5);
+        setAnimes(shuffled);
       } catch (error) {
-        console.error('❌ Failed to load animes:', error);
-        toast.error('Failed to load animes');
-        setAnimes([]);
+        console.error('Failed to load animes:', error);
+        toast.error('Erreur lors du chargement');
       } finally {
         setLoading(false);
       }
     };
 
     loadAnimes();
-  }, [filters.season]);
+  }, []);
 
-  // Filtrer et trier
-  const filteredAnimes = useMemo(() => {
-    let result = animes;
+  const handleSwipe = useCallback((direction: 'left' | 'right') => {
+    const currentAnime = animes[currentIndex];
+    if (!currentAnime) return;
 
-    // Filtrer par score
-    result = result.filter(a => (a.score || 0) >= filters.scoreMin);
+    // Add to history
+    setHistory(prev => [...prev, { anime: currentAnime, direction }]);
 
-    // Filtrer par type
-    if (filters.type !== 'all') {
-      result = result.filter(a => a.type?.toLowerCase() === filters.type);
+    // If swiped right, add to list
+    if (direction === 'right') {
+      if (!isInList(currentAnime.mal_id)) {
+        addToList(currentAnime, 'planned');
+        toast.success(`${currentAnime.title_english || currentAnime.title} ajoute a Ma Liste!`);
+      } else {
+        toast.info('Deja dans votre liste');
+      }
     }
 
-    // Filtrer par statut
-    if (filters.status !== 'all') {
-      result = result.filter(a => a.status?.toLowerCase().includes(filters.status));
-    }
+    // Move to next card
+    setCurrentIndex(prev => prev + 1);
+  }, [animes, currentIndex, addToList, isInList]);
 
-    // Filtrer par année
-    if (filters.year !== 'all') {
-      result = result.filter(a => a.aired?.from?.includes(filters.year));
-    }
+  const handleUndo = useCallback(() => {
+    if (history.length === 0) return;
+    
+    const lastAction = history[history.length - 1];
+    setHistory(prev => prev.slice(0, -1));
+    setCurrentIndex(prev => prev - 1);
+    
+    toast.info('Action annulee');
+  }, [history]);
 
-    // Rechercher
-    if (filters.searchTerm) {
-      const term = filters.searchTerm.toLowerCase();
-      result = result.filter(a =>
-        a.title?.toLowerCase().includes(term) ||
-        a.title_japanese?.toLowerCase().includes(term)
-      );
-    }
-
-    // Trier
-    switch (filters.sortBy) {
-      case 'score':
-        result.sort((a, b) => (b.score || 0) - (a.score || 0));
-        break;
-      case 'recent':
-        result.sort((a, b) =>
-          new Date(b.aired?.from || 0).getTime() -
-          new Date(a.aired?.from || 0).getTime()
-        );
-        break;
-      case 'trending':
-        result.sort((a, b) => (b.members || 0) - (a.members || 0));
-        break;
-      default: // popular
-        result.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
-    }
-
-    return result;
-  }, [animes, filters]);
-
-  const handleLike = (anime: Anime) => {
-    const isFavorite = favorites.includes(anime.mal_id);
-    if (isFavorite) {
-      removeFavorite(anime.mal_id);
-      toast.success(`Removed from favorites`);
-    } else {
-      addFavorite(anime.mal_id);
-      toast.success(`Added to favorites! ❤️`);
-    }
+  const visibleCards = animes.slice(currentIndex, currentIndex + 3);
+  const isFinished = currentIndex >= animes.length && !loading;
+  const stats = {
+    liked: history.filter(h => h.direction === 'right').length,
+    passed: history.filter(h => h.direction === 'left').length,
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950/30 to-gray-950 pb-20">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="sticky top-0 z-40 backdrop-blur-lg bg-black/40 border-b border-purple-500/20 py-4 px-4"
-      >
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-600/20 text-purple-400">
-                <Compass size={24} />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white">Discover</h1>
-                <p className="text-sm text-gray-400">Find your next favorite anime</p>
-              </div>
+  // Loading skeleton
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center mx-auto animate-pulse">
+            <Sparkles className="w-8 h-8 text-primary" />
+          </div>
+          <p className="text-muted-foreground">Chargement des animes...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // No more cards
+  if (isFinished) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="text-center space-y-6 max-w-sm">
+          <div className="w-20 h-20 rounded-2xl bg-primary/20 flex items-center justify-center mx-auto">
+            <Sparkles className="w-10 h-10 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">C'est tout pour le moment!</h2>
+            <p className="text-muted-foreground">
+              Vous avez parcouru {animes.length} animes.
+            </p>
+          </div>
+          
+          {/* Stats */}
+          <div className="flex justify-center gap-8 py-4">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-500">{stats.liked}</div>
+              <div className="text-sm text-muted-foreground">Likes</div>
             </div>
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Filter size={16} />
-                  Filters
-                </Button>
-              </SheetTrigger>
-              <SheetContent className="bg-gray-900 border-gray-800">
-                <SheetHeader>
-                  <SheetTitle>Filters</SheetTitle>
-                </SheetHeader>
-                <div className="space-y-4 mt-6">
-                  {/* Sort */}
-                  <div>
-                    <label className="text-sm font-medium text-gray-300">Sort By</label>
-                    <Select value={filters.sortBy} onValueChange={(value: any) =>
-                      setFilters({ ...filters, sortBy: value })
-                    }>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="popular">Popular</SelectItem>
-                        <SelectItem value="score">Highest Rated</SelectItem>
-                        <SelectItem value="recent">Most Recent</SelectItem>
-                        <SelectItem value="trending">Trending Now</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Type */}
-                  <div>
-                    <label className="text-sm font-medium text-gray-300">Type</label>
-                    <Select value={filters.type} onValueChange={(value: any) =>
-                      setFilters({ ...filters, type: value })
-                    }>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Types</SelectItem>
-                        <SelectItem value="tv">TV Series</SelectItem>
-                        <SelectItem value="movie">Movies</SelectItem>
-                        <SelectItem value="ova">OVA</SelectItem>
-                        <SelectItem value="special">Specials</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Season */}
-                  <div>
-                    <label className="text-sm font-medium text-gray-300">Season</label>
-                    <Select value={filters.season} onValueChange={(value: any) =>
-                      setFilters({ ...filters, season: value })
-                    }>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Seasons</SelectItem>
-                        <SelectItem value="winter">Winter</SelectItem>
-                        <SelectItem value="spring">Spring</SelectItem>
-                        <SelectItem value="summer">Summer</SelectItem>
-                        <SelectItem value="fall">Fall</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Min Score */}
-                  <div>
-                    <label className="text-sm font-medium text-gray-300">
-                      Minimum Score: {filters.scoreMin}+
-                    </label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="10"
-                      step="0.5"
-                      value={filters.scoreMin}
-                      onChange={(e) =>
-                        setFilters({ ...filters, scoreMin: parseFloat(e.target.value) })
-                      }
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-              </SheetContent>
-            </Sheet>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-red-500">{stats.passed}</div>
+              <div className="text-sm text-muted-foreground">Passes</div>
+            </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <Input
-              placeholder="Search anime..."
-              value={filters.searchTerm}
-              onChange={(e) => setFilters({ ...filters, searchTerm: e.target.value })}
-              className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500"
-            />
+          <div className="flex flex-col gap-3">
+            <Link to="/lists">
+              <Button className="w-full bg-primary text-primary-foreground">
+                Voir Ma Liste
+              </Button>
+            </Link>
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => {
+                setCurrentIndex(0);
+                setHistory([]);
+              }}
+            >
+              Recommencer
+            </Button>
           </div>
         </div>
-      </motion.div>
+      </div>
+    );
+  }
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Results Count */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="mb-6 flex items-center justify-between"
-        >
-          <p className="text-gray-400">
-            Found <span className="text-purple-400 font-bold">{filteredAnimes.length}</span> animes
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 pb-2">
+        <div>
+          <h1 className="text-xl font-bold text-foreground">Decouverte</h1>
+          <p className="text-sm text-muted-foreground">
+            {animes.length - currentIndex} animes restants
           </p>
-          {filters.searchTerm && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setFilters({ ...filters, searchTerm: '' })}
-              className="gap-2"
-            >
-              <X size={16} />
-              Clear Search
-            </Button>
-          )}
-        </motion.div>
+        </div>
+        <div className="flex items-center gap-4 text-sm">
+          <span className="text-green-500 font-medium">{stats.liked} likes</span>
+          <span className="text-red-500 font-medium">{stats.passed} passes</span>
+        </div>
+      </div>
 
-        {/* Grid */}
-        <AnimatePresence mode="wait">
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {[...Array(12)].map((_, i) => (
-                <SkeletonCard key={i} />
-              ))}
-            </div>
-          ) : filteredAnimes.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col items-center justify-center py-20 text-center"
-            >
-              <BookOpen size={48} className="text-gray-600 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-300 mb-2">No animes found</h3>
-              <p className="text-gray-500 mb-6">Try adjusting your filters or search term</p>
-              <Button onClick={() => setFilters({
-                status: 'all',
-                type: 'all',
-                season: 'all',
-                year: 'all',
-                sortBy: 'popular',
-                scoreMin: 5,
-                searchTerm: '',
-              })}>
-                Reset Filters
-              </Button>
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-            >
-              {filteredAnimes.map((anime, idx) => (
-                <motion.div
-                  key={anime.mal_id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                >
-                  <AnimeCard
-                    anime={anime}
-                    onLike={handleLike}
-                    isFavorite={favorites.includes(anime.mal_id)}
-                  />
-                </motion.div>
-              ))}
-            </motion.div>
-          )}
+      {/* Card Stack */}
+      <div 
+        ref={containerRef}
+        className="flex-1 relative mx-4 mb-32"
+        style={{ minHeight: '500px' }}
+      >
+        <AnimatePresence mode="popLayout">
+          {visibleCards.map((anime, index) => (
+            <SwipeCard
+              key={anime.mal_id}
+              anime={anime}
+              onSwipe={handleSwipe}
+              isActive={index === 0}
+              index={index}
+            />
+          ))}
         </AnimatePresence>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="fixed bottom-20 md:bottom-8 left-0 right-0 flex items-center justify-center gap-4 p-4">
+        {/* Undo Button */}
+        <button
+          onClick={handleUndo}
+          disabled={history.length === 0}
+          className="w-12 h-12 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/50 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+        >
+          <RotateCcw className="w-5 h-5" />
+        </button>
+
+        {/* Nope Button */}
+        <button
+          onClick={() => handleSwipe('left')}
+          className="w-16 h-16 rounded-full bg-card border-2 border-red-500/30 flex items-center justify-center text-red-500 hover:bg-red-500/10 hover:border-red-500 hover:scale-110 transition-all active:scale-95"
+        >
+          <X className="w-8 h-8" strokeWidth={3} />
+        </button>
+
+        {/* Like Button */}
+        <button
+          onClick={() => handleSwipe('right')}
+          className="w-16 h-16 rounded-full bg-card border-2 border-primary/30 flex items-center justify-center text-primary hover:bg-primary/10 hover:border-primary hover:scale-110 transition-all active:scale-95"
+        >
+          <Heart className="w-8 h-8" strokeWidth={2.5} />
+        </button>
+
+        {/* Details Button */}
+        {visibleCards[0] && (
+          <Link
+            to={`/anime/${visibleCards[0].mal_id}`}
+            className="w-12 h-12 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/50 transition-all"
+          >
+            <Info className="w-5 h-5" />
+          </Link>
+        )}
+      </div>
+
+      {/* Instructions */}
+      <div className="fixed bottom-4 left-0 right-0 text-center md:hidden">
+        <p className="text-xs text-muted-foreground">
+          Swipez a droite pour aimer, a gauche pour passer
+        </p>
       </div>
     </div>
   );
