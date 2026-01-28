@@ -1,34 +1,48 @@
-// Résoudre l'API_BASE_URL à l'exécution
-function getApiBaseUrl(): string {
-  const buildTimeUrl = import.meta.env.VITE_API_URL;
-  console.log('📌 VITE_API_URL (build-time):', buildTimeUrl);
-  
-  // En Codespaces/Production: ignorer localhost et utiliser l'URL HTTPS
-  if (window.location.protocol === 'https:' && window.location.hostname !== 'localhost') {
-    // Remplacer le port 8080 par 4000 dans l'URL pour obtenir le backend
-    const apiUrl = window.location.origin.replace(/-8080\./, '-4000.');
-    console.log('🌐 Codespaces detected - API URL:', apiUrl);
-    return apiUrl;
-  }
-  
-  // En local dev (localhost)
-  if (window.location.hostname === 'localhost') {
-    console.log('💻 Local development detected - using localhost:4000');
-    return 'http://localhost:4000';
-  }
-  
-  // Fallback: utiliser VITE_API_URL si défini
-  if (buildTimeUrl && !buildTimeUrl.includes('localhost')) {
-    console.log('🔧 Using VITE_API_URL:', buildTimeUrl);
-    return buildTimeUrl;
-  }
-  
-  // Ultime fallback
-  console.warn('⚠️ Could not determine API URL, using localhost');
-  return 'http://localhost:4000';
-}
+// Cache for API URL - lazy loaded
+let _cachedApiUrl: string | null = null;
 
-const API_BASE_URL = getApiBaseUrl();
+// Resolve API_BASE_URL lazily at runtime (not at import time)
+function getApiBaseUrl(): string {
+  // Return cached value if already computed
+  if (_cachedApiUrl) return _cachedApiUrl;
+  
+  try {
+    const buildTimeUrl = import.meta.env.VITE_API_URL;
+    
+    // Check if window is available (SSR safety)
+    if (typeof window === 'undefined') {
+      _cachedApiUrl = buildTimeUrl || 'http://localhost:4000';
+      return _cachedApiUrl;
+    }
+    
+    // En Codespaces/Production: ignorer localhost et utiliser l'URL HTTPS
+    if (window.location.protocol === 'https:' && window.location.hostname !== 'localhost') {
+      // Remplacer le port 8080 par 4000 dans l'URL pour obtenir le backend
+      _cachedApiUrl = window.location.origin.replace(/-8080\./, '-4000.');
+      return _cachedApiUrl;
+    }
+    
+    // En local dev (localhost)
+    if (window.location.hostname === 'localhost') {
+      _cachedApiUrl = 'http://localhost:4000';
+      return _cachedApiUrl;
+    }
+    
+    // Fallback: utiliser VITE_API_URL si defini
+    if (buildTimeUrl && !buildTimeUrl.includes('localhost')) {
+      _cachedApiUrl = buildTimeUrl;
+      return _cachedApiUrl;
+    }
+    
+    // Ultime fallback
+    _cachedApiUrl = 'http://localhost:4000';
+    return _cachedApiUrl;
+  } catch (e) {
+    // Safety fallback if anything fails
+    _cachedApiUrl = 'http://localhost:4000';
+    return _cachedApiUrl;
+  }
+}
 
 export interface DiscordUser {
   id: string;
@@ -51,45 +65,39 @@ export const discordAuthService = {
    * Obtenir l'URL d'autorisation Discord
    */
   async getAuthUrl(): Promise<string> {
+    const apiUrl = getApiBaseUrl();
     try {
-      console.log('🔐 Tentative de connexion à:', API_BASE_URL);
-      const response = await fetch(`${API_BASE_URL}/api/auth/discord/login`, {
+      const response = await fetch(`${apiUrl}/api/auth/discord/login`, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
       });
       
-      console.log('📡 Réponse reçue:', response.status);
-      
       if (!response.ok) {
-        const errorData = await response.text();
-        console.error('❌ Erreur serveur:', errorData);
         throw new Error(`Erreur serveur: ${response.status}`);
       }
       
       const data = await response.json();
       return data.authUrl;
     } catch (error: any) {
-      console.error('❌ Erreur complète:', error);
       const message = error?.message || String(error);
       
-      // Déterminer le type d'erreur
       if (message.includes('Failed to fetch') || message.includes('fetch')) {
-        console.error('🔴 Problème de connexion au backend');
-        throw new Error(`Impossible de joindre le backend à ${API_BASE_URL}. Vérifiez que le serveur est démarré.`);
+        throw new Error('Backend non disponible. Fonctionnalite Discord desactivee.');
       }
       
-      throw new Error('Le serveur d\'authentification n\'est pas disponible. Vérifiez que le backend est lancé.');
+      throw new Error('Le serveur d\'authentification n\'est pas disponible.');
     }
   },
 
   /**
-   * Vérifier la session actuelle
+   * Verifier la session actuelle
    */
   async getCurrentUser(): Promise<AuthResponse | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/discord/me`, {
+      const apiUrl = getApiBaseUrl();
+      const response = await fetch(`${apiUrl}/api/auth/discord/me`, {
         credentials: 'include',
       });
       
@@ -98,7 +106,7 @@ export const discordAuthService = {
       }
       
       return await response.json();
-    } catch (error) {
+    } catch {
       // Silencieux si le backend n'est pas disponible
       // L'utilisateur peut toujours utiliser l'app sans Discord
       return null;
@@ -106,13 +114,18 @@ export const discordAuthService = {
   },
 
   /**
-   * Déconnexion
+   * Deconnexion
    */
   async logout(): Promise<void> {
-    await fetch(`${API_BASE_URL}/api/auth/discord/logout`, {
-      method: 'POST',
-      credentials: 'include',
-    });
+    try {
+      const apiUrl = getApiBaseUrl();
+      await fetch(`${apiUrl}/api/auth/discord/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch {
+      // Ignore errors on logout
+    }
   },
 
   /**

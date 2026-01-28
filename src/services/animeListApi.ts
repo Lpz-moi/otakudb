@@ -1,6 +1,12 @@
 import type { Anime } from './jikanApi';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// Lazy-loaded API URL
+let _apiUrl: string | null = null;
+function getApiUrl(): string {
+  if (_apiUrl) return _apiUrl;
+  _apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  return _apiUrl;
+}
 
 export type AnimeStatus = 'watching' | 'completed' | 'planned' | 'dropped';
 
@@ -28,7 +34,7 @@ export const animeListService = {
   async getAnimeList(): Promise<AnimeListItem[]> {
     try {
       console.log('📖 Fetching anime list from backend...');
-      const response = await fetch(`${API_BASE_URL}/api/anime`, {
+      const response = await fetch(`${getApiUrl()}/api/anime`, {
         credentials: 'include',
       });
 
@@ -58,7 +64,7 @@ export const animeListService = {
   ): Promise<AnimeListItem> {
     try {
       console.log('➕ Adding anime to list:', anime.mal_id);
-      const response = await fetch(`${API_BASE_URL}/api/anime`, {
+      const response = await fetch(`${getApiUrl()}/api/anime`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -106,7 +112,7 @@ export const animeListService = {
   ): Promise<void> {
     try {
       console.log('📝 Updating anime:', animeId, updates);
-      const response = await fetch(`${API_BASE_URL}/api/anime/${animeId}`, {
+      const response = await fetch(`${getApiUrl()}/api/anime/${animeId}`, {
         method: 'PUT',
         credentials: 'include',
         headers: {
@@ -133,7 +139,7 @@ export const animeListService = {
   async removeAnime(animeId: number): Promise<void> {
     try {
       console.log('🗑️ Removing anime from list:', animeId);
-      const response = await fetch(`${API_BASE_URL}/api/anime/${animeId}`, {
+      const response = await fetch(`${getApiUrl()}/api/anime/${animeId}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -156,7 +162,7 @@ export const animeListService = {
   async getStats() {
     try {
       console.log('📊 Fetching stats...');
-      const response = await fetch(`${API_BASE_URL}/api/anime/stats`, {
+      const response = await fetch(`${getApiUrl()}/api/anime/stats`, {
         credentials: 'include',
       });
 
